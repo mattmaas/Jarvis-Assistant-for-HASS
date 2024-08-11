@@ -179,9 +179,7 @@ class VoiceAssistant:
                 self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
                 self.ws.send(json.dumps(message))
                 
-                tts_url = None
-                response_speech = None
-                events = []
+                events = {}
                 timeout = 30  # Set a timeout of 30 seconds
                 start_time = time.time()
                 
@@ -196,51 +194,33 @@ class VoiceAssistant:
                     self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
                     
                     if isinstance(response, dict):
-                        if response.get("id") == current_message_id:
-                            if response.get("type") == "event":
-                                events.append(response)
-                                self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
-                            elif response.get("type") == "result":
-                                if response.get("success"):
-                                    self._debug_print(f"Command processed successfully (ID: {current_message_id})")
+                        response_id = response.get("id")
+                        if response_id not in events:
+                            events[response_id] = []
+                        
+                        if response.get("type") == "event":
+                            events[response_id].append(response)
+                            self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
+                        elif response.get("type") == "result":
+                            if response.get("success"):
+                                self._debug_print(f"Command processed successfully (ID: {response_id})")
+                            else:
+                                error = response.get('error', {})
+                                if isinstance(error, dict):
+                                    error_message = error.get('message', 'Unknown error')
+                                    self._debug_print(f"Error from Home Assistant: {error_message} (ID: {response_id})")
                                 else:
-                                    error = response.get('error', {})
-                                    if isinstance(error, dict):
-                                        error_message = error.get('message', 'Unknown error')
-                                        self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
-                                    else:
-                                        self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {current_message_id})")
-                                self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
+                                    self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {response_id})")
+                            self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
+                            
+                            # Process events for this message ID
+                            self._process_events(response_id, events[response_id])
+                            
+                            if response_id == current_message_id:
                                 break
-                        else:
-                            self._debug_print(f"Received response for different ID: {response.get('id')}")
-                            self._debug_print(f"Response content: {json.dumps(response, indent=2)}")
                     else:
                         self._debug_print(f"Unexpected response structure: {response}")
-                
-                # Process events after receiving the final result
-                tts_url = None
-                response_speech = None
-                for event in events:
-                    event_data = event.get("event", {})
-                    event_type = event_data.get("type")
-                    if event_type == "tts-end":
-                        tts_data = event_data.get("data", {}).get("tts_output", {})
-                        tts_url = tts_data.get("url")
-                        if tts_url:
-                            self._debug_print(f"TTS URL received: {tts_url} (ID: {current_message_id})")
-                            full_tts_url = f"{self.ha_url}{tts_url}"
-                            self._play_audio_on_google_home(full_tts_url)
-                        else:
-                            self._debug_print(f"No TTS URL received in the tts-end event (ID: {current_message_id})")
-                    elif event_type == "intent-end":
-                        intent_output = event_data.get("data", {}).get("intent_output", {})
-                        response_speech = intent_output.get("response", {}).get("speech", {}).get("plain", {}).get("speech")
-                        if response_speech:
-                            self._debug_print(f"Response from Home Assistant: {response_speech} (ID: {current_message_id})")
-                
-                if not tts_url and not response_speech:
-                    self._debug_print(f"No TTS URL or text response received. This might indicate an issue with the Home Assistant pipeline or TTS service (ID: {current_message_id})")
+
             except websocket.WebSocketException as e:
                 self._debug_print(f"WebSocket error: {str(e)}")
                 self._reconnect_to_home_assistant()
@@ -249,6 +229,30 @@ class VoiceAssistant:
             except Exception as e:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
                 self._reconnect_to_home_assistant()
+
+    def _process_events(self, message_id, events):
+        tts_url = None
+        response_speech = None
+        for event in events:
+            event_data = event.get("event", {})
+            event_type = event_data.get("type")
+            if event_type == "tts-end":
+                tts_data = event_data.get("data", {}).get("tts_output", {})
+                tts_url = tts_data.get("url")
+                if tts_url:
+                    self._debug_print(f"TTS URL received: {tts_url} (ID: {message_id})")
+                    full_tts_url = f"{self.ha_url}{tts_url}"
+                    self._play_audio_on_google_home(full_tts_url)
+                else:
+                    self._debug_print(f"No TTS URL received in the tts-end event (ID: {message_id})")
+            elif event_type == "intent-end":
+                intent_output = event_data.get("data", {}).get("intent_output", {})
+                response_speech = intent_output.get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                if response_speech:
+                    self._debug_print(f"Response from Home Assistant: {response_speech} (ID: {message_id})")
+        
+        if not tts_url and not response_speech:
+            self._debug_print(f"No TTS URL or text response received. This might indicate an issue with the Home Assistant pipeline or TTS service (ID: {message_id})")
 
     def _connect_to_home_assistant(self):
         with self.ws_lock:
