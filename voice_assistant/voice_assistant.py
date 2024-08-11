@@ -143,8 +143,10 @@ class VoiceAssistant:
                         self._debug_print("Could not understand the command")
                 elif self.stt_provider == "whisper":
                     try:
-                        audio_data = audio.get_raw_data()
-                        response = openai.Audio.transcribe("whisper-1", audio_data)
+                        audio_data = audio.get_wav_data()
+                        audio_file = io.BytesIO(audio_data)
+                        audio_file.name = 'audio.wav'  # Add a name attribute to the BytesIO object
+                        response = openai.Audio.transcribe("whisper-1", audio_file)
                         if response and 'text' in response:
                             command = response['text']
                             self._debug_print(f"Command recognized: {command}")
