@@ -4,6 +4,7 @@ import pyaudio
 import struct
 import speech_recognition as sr
 import openai
+import io
 from debug_window import debug_signals
 from config import STT_PROVIDER, OPENAI_API_KEY
 
