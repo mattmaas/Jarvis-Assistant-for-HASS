@@ -73,17 +73,25 @@ def main():
                         debug_signals.debug_signal.emit(f"Additional response: {result}")
                     
                     pipelines = result.get("result", {}).get("pipelines", [])
+                    preferred_pipeline = result.get("result", {}).get("preferred_pipeline")
+                    
+                    # Find the "jarvis" pipeline or use the first one as default
+                    default_pipeline = next((p for p in pipelines if p.get('name', '').lower() == 'jarvis'), pipelines[0] if pipelines else None)
                     
                     for pipeline in pipelines:
                         action = QAction(pipeline.get('name', 'Unknown'), ha_menu)
+                        action.setCheckable(True)
                         action.triggered.connect(lambda checked, p=pipeline.get('id'): set_ha_pipeline(p))
                         ha_menu.addAction(action)
+                        
+                        # Set as checked if it's the preferred or default pipeline
+                        if pipeline.get('id') == preferred_pipeline or (not preferred_pipeline and pipeline == default_pipeline):
+                            action.setChecked(True)
+                            set_ha_pipeline(pipeline.get('id'))
                     
-                    # Set the preferred pipeline if available
-                    preferred_pipeline = result.get("result", {}).get("preferred_pipeline")
-                    if preferred_pipeline:
-                        set_ha_pipeline(preferred_pipeline)
-                        debug_signals.debug_signal.emit(f"Set preferred pipeline: {preferred_pipeline}")
+                    if not preferred_pipeline and default_pipeline:
+                        set_ha_pipeline(default_pipeline.get('id'))
+                        debug_signals.debug_signal.emit(f"Set default pipeline: {default_pipeline.get('name')}")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
             else:
