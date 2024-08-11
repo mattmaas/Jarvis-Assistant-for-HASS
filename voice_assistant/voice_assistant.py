@@ -3,6 +3,7 @@ import pvporcupine
 import pyaudio
 import struct
 import speech_recognition as sr
+from debug_window import debug_signals
 
 class VoiceAssistant:
     def __init__(self):
@@ -37,7 +38,7 @@ class VoiceAssistant:
 
                 keyword_index = self.porcupine.process(pcm)
                 if keyword_index >= 0:
-                    print("Wake word detected!")
+                    self._debug_print("Wake word detected!")
                     self._process_speech()
 
         finally:
@@ -51,25 +52,29 @@ class VoiceAssistant:
     def _process_speech(self):
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
-            print("Listening for command...")
+            self._debug_print("Listening for command...")
             audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
 
         try:
             command = recognizer.recognize_google(audio)
-            print(f"Command recognized: {command}")
+            self._debug_print(f"Command recognized: {command}")
             self._execute_command(command)
         except sr.UnknownValueError:
-            print("Could not understand the command")
+            self._debug_print("Could not understand the command")
         except sr.RequestError as e:
-            print(f"Could not request results; {e}")
+            self._debug_print(f"Could not request results; {e}")
 
     def _execute_command(self, command):
         # Implement your command processing logic here
-        print(f"Executing command: {command}")
+        self._debug_print(f"Executing command: {command}")
         # For example:
         if "hello" in command.lower():
-            print("Hello! How can I assist you?")
+            self._debug_print("Hello! How can I assist you?")
         elif "goodbye" in command.lower():
-            print("Goodbye! Have a great day!")
+            self._debug_print("Goodbye! Have a great day!")
         else:
-            print("I'm not sure how to handle that command.")
+            self._debug_print("I'm not sure how to handle that command.")
+
+    def _debug_print(self, message):
+        print(message)
+        debug_signals.debug_signal.emit(message)
