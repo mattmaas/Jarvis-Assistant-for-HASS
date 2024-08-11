@@ -6,7 +6,13 @@ from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
 from voice_assistant import VoiceAssistant
 from debug_window import DebugWindow, debug_signals
-from config import CONFIG_PATH
+import os
+
+# Get the directory of the current script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the path to the config.ini file
+CONFIG_PATH = os.path.join(current_dir, 'config.ini')
 
 def main():
     app = QApplication(sys.argv)
