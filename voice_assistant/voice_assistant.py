@@ -6,7 +6,8 @@ import speech_recognition as sr
 from debug_window import debug_signals
 
 class VoiceAssistant:
-    def __init__(self):
+    def __init__(self, access_key):
+        self.access_key = access_key
         self.porcupine = None
         self.pa = None
         self.audio_stream = None
@@ -22,7 +23,7 @@ class VoiceAssistant:
 
     def _run(self):
         try:
-            self.porcupine = pvporcupine.create(keywords=["jarvis"])
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"])
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,

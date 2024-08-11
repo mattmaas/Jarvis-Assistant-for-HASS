@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PyQt5.QtGui import QIcon
 from voice_assistant import VoiceAssistant
@@ -7,8 +8,14 @@ from debug_window import DebugWindow, debug_signals
 def main():
     app = QApplication(sys.argv)
     
+    # Get the Porcupine access key from an environment variable
+    access_key = os.environ.get('PORCUPINE_ACCESS_KEY')
+    if not access_key:
+        print("Error: PORCUPINE_ACCESS_KEY environment variable not set")
+        sys.exit(1)
+    
     # Create the voice assistant
-    assistant = VoiceAssistant()
+    assistant = VoiceAssistant(access_key)
     
     # Create the debug window
     debug_window = DebugWindow()
