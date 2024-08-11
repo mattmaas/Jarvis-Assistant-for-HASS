@@ -50,32 +50,38 @@ def main():
                 "type": "auth",
                 "access_token": assistant.ha_token
             }
-            ws.send(json.dumps(auth_message))
-            auth_result = json.loads(ws.recv())
-            debug_signals.debug_signal.emit(f"Auth result: {auth_result}")
+            auth_required = json.loads(ws.recv())
+            debug_signals.debug_signal.emit(f"Auth required: {auth_required}")
             
-            if auth_result.get("type") == "auth_ok":
-                # Get pipelines
-                pipeline_message = {
-                    "type": "assist_pipeline/pipeline/list",
-                    "id": 1  # Add a unique ID for the message
-                }
-                ws.send(json.dumps(pipeline_message))
-                result = json.loads(ws.recv())
-                debug_signals.debug_signal.emit(f"Pipelines result: {result}")
+            if auth_required.get("type") == "auth_required":
+                ws.send(json.dumps(auth_message))
+                auth_result = json.loads(ws.recv())
+                debug_signals.debug_signal.emit(f"Auth result: {auth_result}")
                 
-                while result.get("type") != "result" or result.get("id") != 1:
+                if auth_result.get("type") == "auth_ok":
+                    # Get pipelines
+                    pipeline_message = {
+                        "type": "assist_pipeline/pipeline/list",
+                        "id": 1  # Add a unique ID for the message
+                    }
+                    ws.send(json.dumps(pipeline_message))
                     result = json.loads(ws.recv())
-                    debug_signals.debug_signal.emit(f"Additional response: {result}")
-                
-                pipelines = result.get("result", [])
-                
-                for pipeline in pipelines:
-                    action = QAction(pipeline['name'], ha_menu)
-                    action.triggered.connect(lambda checked, p=pipeline['id']: set_ha_pipeline(p))
-                    ha_menu.addAction(action)
+                    debug_signals.debug_signal.emit(f"Pipelines result: {result}")
+                    
+                    while result.get("type") != "result" or result.get("id") != 1:
+                        result = json.loads(ws.recv())
+                        debug_signals.debug_signal.emit(f"Additional response: {result}")
+                    
+                    pipelines = result.get("result", [])
+                    
+                    for pipeline in pipelines:
+                        action = QAction(pipeline['name'], ha_menu)
+                        action.triggered.connect(lambda checked, p=pipeline['id']: set_ha_pipeline(p))
+                        ha_menu.addAction(action)
+                else:
+                    debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
             else:
-                debug_signals.debug_signal.emit("Authentication failed")
+                debug_signals.debug_signal.emit(f"Unexpected response: {auth_required}")
             
             ws.close()
         except Exception as e:
