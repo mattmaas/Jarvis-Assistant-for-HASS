@@ -30,6 +30,9 @@ def main():
     # Start the voice assistant
     assistant.start()
     
+    # Enable tray icon double-click to show/hide main window
+    tray.activated.connect(lambda reason: exit_action.trigger() if reason == QSystemTrayIcon.DoubleClick else None)
+    
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

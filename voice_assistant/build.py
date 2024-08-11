@@ -21,4 +21,5 @@ PyInstaller.__main__.run([
     '--hidden-import=pvporcupine',
     '--hidden-import=pyaudio',
     '--hidden-import=speech_recognition',
+    '--collect-all=pvporcupine',
 ])
