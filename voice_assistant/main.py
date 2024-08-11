@@ -113,7 +113,7 @@ def main():
             # Update the menu to show which pipeline is selected
             for action in ha_menu.actions():
                 pipeline_name = action.text().lstrip('★ ')
-                if pipeline.get('id') == pipeline_id:
+                if pipeline_name == pipeline_id:
                     action.setText(f"★ {pipeline_name}")
                     action.setChecked(True)
                 else:
