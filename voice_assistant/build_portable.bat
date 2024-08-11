@@ -3,8 +3,9 @@ echo Installing requirements...
 pip install -r requirements.txt
 
 echo Installing PyAudio...
-pip install pipwin
-pipwin install pyaudio
+pip install --upgrade setuptools
+pip install --upgrade wheel
+pip install pyaudio
 
 echo Building portable executable...
 python build.py

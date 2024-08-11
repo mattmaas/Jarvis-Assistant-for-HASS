@@ -25,6 +25,7 @@ def build_executable():
             '--hidden-import=pyaudio',
             '--hidden-import=speech_recognition',
             '--collect-all=pvporcupine',
+            '--collect-all=pyaudio',
         ])
         print("Executable built successfully.")
     except Exception as e:
