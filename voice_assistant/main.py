@@ -112,13 +112,14 @@ def main():
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
             # Update the menu to show which pipeline is selected
             for action in ha_menu.actions():
-                pipeline_name = action.text().lstrip('★ ')
+                pipeline_name = action.text().lstrip('★ ').strip()
                 if pipeline_name == pipeline_id:
                     action.setText(f"★ {pipeline_name}")
                     action.setChecked(True)
                 else:
                     action.setText(pipeline_name)
                     action.setChecked(False)
+            debug_signals.debug_signal.emit(f"Updated menu: Pipeline '{pipeline_id}' is now starred")
         else:
             debug_signals.debug_signal.emit("No pipeline selected")
     
