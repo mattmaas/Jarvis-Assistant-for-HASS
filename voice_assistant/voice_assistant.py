@@ -26,6 +26,7 @@ class VoiceAssistant:
         self.ha_token = self.config['HOME_ASSISTANT']['ACCESS_TOKEN']
         self.ha_pipeline = None
         self.ws = None
+        self.message_id = 0  # Initialize message ID counter
 
     def start(self):
         if not self.is_running:
@@ -123,6 +124,7 @@ class VoiceAssistant:
                 self._debug_print("Failed to establish WebSocket connection. Cannot send command.")
                 return
 
+            self.message_id += 1  # Increment message ID
             message = {
                 "type": "assist_pipeline/run",
                 "start_stage": "intent",
@@ -131,7 +133,7 @@ class VoiceAssistant:
                     "text": command
                 },
                 "pipeline": self.ha_pipeline,
-                "id": 1  # Add a unique ID for the message
+                "id": self.message_id  # Use the incremented message ID
             }
             self._debug_print(f"Sending command to Home Assistant: {command}")
             self.ws.send(json.dumps(message))
@@ -141,7 +143,7 @@ class VoiceAssistant:
                 self._debug_print(f"Received response: {response}")
                 
                 if isinstance(response, dict):
-                    if response.get("type") == "result" and response.get("id") == 1:
+                    if response.get("type") == "result" and response.get("id") == self.message_id:
                         if response.get("success"):
                             result = response.get("result", {})
                             if isinstance(result, dict):
