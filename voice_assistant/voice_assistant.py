@@ -138,29 +138,33 @@ class VoiceAssistant:
             self._debug_print(f"Sending command to Home Assistant: {command}")
             self.ws.send(json.dumps(message))
             
+            tts_url = None
             while True:
                 response = json.loads(self.ws.recv())
                 self._debug_print(f"Received response: {response}")
                 
                 if isinstance(response, dict):
-                    if response.get("type") == "result" and response.get("id") == self.message_id:
-                        if response.get("success"):
-                            result = response.get("result")
-                            if result is None:
-                                self._debug_print("Command processed successfully, but no result returned.")
-                                break
-                            elif isinstance(result, dict):
-                                tts = result.get("tts", {})
-                                if isinstance(tts, dict):
-                                    tts_url = tts.get("url")
-                                    if tts_url:
-                                        self._debug_print(f"TTS URL received: {tts_url}")
-                                    else:
-                                        self._debug_print("No TTS URL received in the response.")
-                                else:
-                                    self._debug_print("Unexpected 'tts' structure in response.")
+                    if response.get("type") == "event":
+                        event = response.get("event", {})
+                        event_type = event.get("type")
+                        if event_type == "tts-end":
+                            tts_data = event.get("data", {}).get("tts_output", {})
+                            tts_url = tts_data.get("url")
+                            if tts_url:
+                                self._debug_print(f"TTS URL received: {tts_url}")
                             else:
-                                self._debug_print(f"Unexpected 'result' structure in response: {result}")
+                                self._debug_print("No TTS URL received in the tts-end event.")
+                        elif event_type == "intent-end":
+                            intent_output = event.get("data", {}).get("intent_output", {})
+                            response_speech = intent_output.get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                            if response_speech:
+                                self._debug_print(f"Response from Home Assistant: {response_speech}")
+                    elif response.get("type") == "result" and response.get("id") == self.message_id:
+                        if response.get("success"):
+                            if tts_url:
+                                self._debug_print("Command processed successfully.")
+                            else:
+                                self._debug_print("Command processed successfully, but no TTS URL was received.")
                         else:
                             error = response.get('error', {})
                             if isinstance(error, dict):
@@ -169,8 +173,6 @@ class VoiceAssistant:
                             else:
                                 self._debug_print(f"Unexpected 'error' structure in response: {error}")
                         break
-                    elif response.get("type") == "event":
-                        self._debug_print(f"Received event: {response}")
                     else:
                         self._debug_print(f"Unexpected response type: {response.get('type')}")
                 else:
