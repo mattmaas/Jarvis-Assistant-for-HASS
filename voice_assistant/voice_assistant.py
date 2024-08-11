@@ -138,21 +138,38 @@ class VoiceAssistant:
             
             while True:
                 response = json.loads(self.ws.recv())
-                if response.get("type") == "result" and response.get("id") == 1:
-                    if response.get("success"):
-                        tts_url = response.get("result", {}).get("tts", {}).get("url")
-                        if tts_url:
-                            self._debug_print(f"TTS URL received: {tts_url}")
+                self._debug_print(f"Received response: {response}")
+                
+                if isinstance(response, dict):
+                    if response.get("type") == "result" and response.get("id") == 1:
+                        if response.get("success"):
+                            result = response.get("result", {})
+                            if isinstance(result, dict):
+                                tts = result.get("tts", {})
+                                if isinstance(tts, dict):
+                                    tts_url = tts.get("url")
+                                    if tts_url:
+                                        self._debug_print(f"TTS URL received: {tts_url}")
+                                    else:
+                                        self._debug_print("No TTS URL received in the response.")
+                                else:
+                                    self._debug_print("Unexpected 'tts' structure in response.")
+                            else:
+                                self._debug_print("Unexpected 'result' structure in response.")
                         else:
-                            self._debug_print("No TTS URL received in the response.")
+                            error = response.get('error', {})
+                            if isinstance(error, dict):
+                                error_message = error.get('message', 'Unknown error')
+                                self._debug_print(f"Error from Home Assistant: {error_message}")
+                            else:
+                                self._debug_print("Unexpected 'error' structure in response.")
+                        break
+                    elif response.get("type") == "event":
+                        self._debug_print(f"Received event: {response}")
                     else:
-                        error_message = response.get('error', {}).get('message', 'Unknown error')
-                        self._debug_print(f"Error from Home Assistant: {error_message}")
-                    break
-                elif response.get("type") == "event":
-                    self._debug_print(f"Received event: {response}")
+                        self._debug_print(f"Unexpected response type: {response.get('type')}")
                 else:
-                    self._debug_print(f"Unexpected response: {response}")
+                    self._debug_print(f"Unexpected response structure: {response}")
         except websocket.WebSocketException as e:
             self._debug_print(f"WebSocket error: {str(e)}")
         except json.JSONDecodeError:
