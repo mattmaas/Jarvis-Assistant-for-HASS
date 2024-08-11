@@ -35,10 +35,11 @@ class VoiceAssistant:
     def _load_wake_words(self):
         try:
             with open('wakewords.json', 'r') as f:
-                return json.load(f)
+                wake_words_data = json.load(f)
+                return {key: value['id'] for key, value in wake_words_data.items()}
         except Exception as e:
             self._debug_print(f"Error loading wake words: {str(e)}")
-            return {"jarvis": "01j51cps9cfghkdyd0vatrdf8x"}  # Default to Jarvis if file can't be loaded
+            return {"porcupine": "porcupine_en"}  # Default to Porcupine if file can't be loaded
 
     def start(self):
         if not self.is_running:
