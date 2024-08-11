@@ -74,7 +74,7 @@ class VoiceAssistant:
             audio = recognizer.listen(source, timeout=7, phrase_time_limit=7)
 
         try:
-            if STT_PROVIDER == "google":
+            if self.stt_provider == "google":
                 command = recognizer.recognize_google(audio, show_all=True)
                 if command:
                     best_guess = command['alternative'][0]['transcript']
@@ -82,7 +82,7 @@ class VoiceAssistant:
                     self._execute_command(best_guess)
                 else:
                     self._debug_print("Could not understand the command")
-            elif STT_PROVIDER == "whisper":
+            elif self.stt_provider == "whisper":
                 audio_data = audio.get_wav_data()
                 file_obj = sr.AudioFile(io.BytesIO(audio_data))
                 with file_obj as source:
