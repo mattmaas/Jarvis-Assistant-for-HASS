@@ -1,4 +1,5 @@
 import sys
+import threading
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PyQt5.QtGui import QIcon
 from voice_assistant import VoiceAssistant
@@ -35,8 +36,10 @@ def main():
     tray.setContextMenu(menu)
     tray.show()
     
-    # Start the voice assistant
-    assistant.start()
+    # Start the voice assistant in a separate thread
+    assistant_thread = threading.Thread(target=assistant.start)
+    assistant_thread.daemon = True
+    assistant_thread.start()
     
     # Enable tray icon double-click to show/hide main window
     tray.activated.connect(lambda reason: exit_action.trigger() if reason == QSystemTrayIcon.DoubleClick else None)
