@@ -1,4 +1,4 @@
 PyQt5==5.15.6
 pvporcupine==2.1.4
-PyAudio==0.2.11
 SpeechRecognition==3.8.1
+PyInstaller==5.7.0
