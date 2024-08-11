@@ -6,6 +6,8 @@ import speech_recognition as sr
 import openai
 import io
 import configparser
+import websocket
+import json
 from debug_window import debug_signals
 
 class VoiceAssistant:
@@ -20,6 +22,10 @@ class VoiceAssistant:
         self.is_running = False
         openai.api_key = self.config['OPENAI']['API_KEY']
         self.stt_provider = self.config['STT']['PROVIDER']
+        self.ha_url = self.config['HOME_ASSISTANT']['URL']
+        self.ha_token = self.config['HOME_ASSISTANT']['ACCESS_TOKEN']
+        self.ha_pipeline = None
+        self.ws = None
 
     def start(self):
         if not self.is_running:
@@ -98,15 +104,48 @@ class VoiceAssistant:
             self._debug_print(f"An error occurred: {e}")
 
     def _execute_command(self, command):
-        # Implement your command processing logic here
         self._debug_print(f"Executing command: {command}")
-        # For example:
-        if "hello" in command.lower():
-            self._debug_print("Hello! How can I assist you?")
-        elif "goodbye" in command.lower():
-            self._debug_print("Goodbye! Have a great day!")
+        if self.ha_pipeline:
+            self._send_to_home_assistant(command)
         else:
-            self._debug_print("I'm not sure how to handle that command.")
+            self._debug_print("No Home Assistant pipeline selected.")
+
+    def _send_to_home_assistant(self, command):
+        if not self.ws:
+            self._connect_to_home_assistant()
+
+        message = {
+            "type": "assist_pipeline/run",
+            "start_stage": "intent",
+            "end_stage": "tts",
+            "input": {
+                "text": command
+            },
+            "pipeline": self.ha_pipeline
+        }
+        self.ws.send(json.dumps(message))
+        result = json.loads(self.ws.recv())
+        if result.get("success"):
+            tts_url = result.get("result", {}).get("tts", {}).get("url")
+            if tts_url:
+                self._debug_print(f"TTS URL: {tts_url}")
+            else:
+                self._debug_print("No TTS URL received.")
+        else:
+            self._debug_print(f"Error: {result.get('error', {}).get('message', 'Unknown error')}")
+
+    def _connect_to_home_assistant(self):
+        self.ws = websocket.create_connection(f"ws://{self.ha_url}/api/websocket")
+        auth_message = {
+            "type": "auth",
+            "access_token": self.ha_token
+        }
+        self.ws.send(json.dumps(auth_message))
+        result = json.loads(self.ws.recv())
+        if result.get("type") == "auth_ok":
+            self._debug_print("Connected to Home Assistant")
+        else:
+            self._debug_print("Failed to connect to Home Assistant")
 
     def _debug_print(self, message):
         print(message)

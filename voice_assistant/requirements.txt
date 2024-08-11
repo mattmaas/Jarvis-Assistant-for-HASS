@@ -5,3 +5,4 @@ PyInstaller==5.7.0
 pyaudio==0.2.13
 jaraco.text
 openai==0.27.0
+websocket-client==1.3.2
