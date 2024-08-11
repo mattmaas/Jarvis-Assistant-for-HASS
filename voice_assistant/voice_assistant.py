@@ -127,20 +127,29 @@ class VoiceAssistant:
                 "input": {
                     "text": command
                 },
-                "pipeline": self.ha_pipeline
+                "pipeline": self.ha_pipeline,
+                "id": 1  # Add a unique ID for the message
             }
             self._debug_print(f"Sending command to Home Assistant: {command}")
             self.ws.send(json.dumps(message))
-            result = json.loads(self.ws.recv())
-            if result.get("success"):
-                tts_url = result.get("result", {}).get("tts", {}).get("url")
-                if tts_url:
-                    self._debug_print(f"TTS URL received: {tts_url}")
+            
+            while True:
+                response = json.loads(self.ws.recv())
+                if response.get("type") == "result" and response.get("id") == 1:
+                    if response.get("success"):
+                        tts_url = response.get("result", {}).get("tts", {}).get("url")
+                        if tts_url:
+                            self._debug_print(f"TTS URL received: {tts_url}")
+                        else:
+                            self._debug_print("No TTS URL received in the response.")
+                    else:
+                        error_message = response.get('error', {}).get('message', 'Unknown error')
+                        self._debug_print(f"Error from Home Assistant: {error_message}")
+                    break
+                elif response.get("type") == "event":
+                    self._debug_print(f"Received event: {response}")
                 else:
-                    self._debug_print("No TTS URL received in the response.")
-            else:
-                error_message = result.get('error', {}).get('message', 'Unknown error')
-                self._debug_print(f"Error from Home Assistant: {error_message}")
+                    self._debug_print(f"Unexpected response: {response}")
         except websocket.WebSocketException as e:
             self._debug_print(f"WebSocket error: {str(e)}")
         except json.JSONDecodeError:
@@ -154,19 +163,27 @@ class VoiceAssistant:
             ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
             self._debug_print(f"Attempting to connect to Home Assistant at {ws_url}")
             self.ws = websocket.create_connection(ws_url, timeout=10)
+            
+            # Wait for auth_required message
+            auth_required = json.loads(self.ws.recv())
+            if auth_required.get("type") != "auth_required":
+                self._debug_print(f"Unexpected initial message: {auth_required}")
+                return
+
             auth_message = {
                 "type": "auth",
                 "access_token": self.ha_token
             }
             self._debug_print("Sending authentication message")
             self.ws.send(json.dumps(auth_message))
-            result = json.loads(self.ws.recv())
-            if result.get("type") == "auth_ok":
+            
+            auth_result = json.loads(self.ws.recv())
+            if auth_result.get("type") == "auth_ok":
                 self._debug_print("Successfully connected and authenticated with Home Assistant")
-            elif result.get("type") == "auth_invalid":
+            elif auth_result.get("type") == "auth_invalid":
                 self._debug_print("Authentication failed: Invalid access token")
             else:
-                self._debug_print(f"Unexpected response from Home Assistant: {result}")
+                self._debug_print(f"Unexpected authentication response: {auth_result}")
         except websocket.WebSocketTimeoutException:
             self._debug_print("Connection to Home Assistant timed out")
         except websocket.WebSocketConnectionClosedException:
