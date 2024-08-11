@@ -10,6 +10,7 @@ import websocket
 import json
 import time
 from debug_window import debug_signals
+from datetime import datetime
 
 class VoiceAssistant:
     def __init__(self, config_path, sensitivity=0.5):
@@ -175,7 +176,7 @@ class VoiceAssistant:
                     "pipeline": self.ha_pipeline,
                     "id": current_message_id
                 }
-                self._debug_print(f"Sending command to Home Assistant: {command} (ID: {current_message_id})")
+                self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
                 self.ws.send(json.dumps(message))
                 
                 tts_url = None
@@ -189,8 +190,10 @@ class VoiceAssistant:
                         self._debug_print(f"Timeout waiting for response from Home Assistant (ID: {current_message_id})")
                         break
 
-                    response = json.loads(self.ws.recv())
-                    self._debug_print(f"Received response: {response}")
+                    response_raw = self.ws.recv()
+                    self._debug_print(f"Received raw response: {response_raw}")
+                    response = json.loads(response_raw)
+                    self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
                     
                     if isinstance(response, dict):
                         if response.get("id") == current_message_id:
@@ -262,7 +265,7 @@ class VoiceAssistant:
                     "type": "auth",
                     "access_token": self.ha_token
                 }
-                self._debug_print("Sending authentication message")
+                self._debug_print(f"Sending authentication message: {json.dumps(auth_message)}")
                 self.ws.send(json.dumps(auth_message))
                 
                 auth_result = json.loads(self.ws.recv())
@@ -292,12 +295,15 @@ class VoiceAssistant:
             "type": "subscribe_events",
             "event_type": "state_changed"
         }
+        self._debug_print(f"Sending subscribe message: {json.dumps(subscribe_message)}")
         self.ws.send(json.dumps(subscribe_message))
         self._debug_print(f"Subscribed to state_changed events (ID: {self.message_id})")
 
     def _debug_print(self, message):
-        print(message)
-        debug_signals.debug_signal.emit(message)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        formatted_message = f"[{timestamp}] {message}"
+        print(formatted_message)
+        debug_signals.debug_signal.emit(formatted_message)
 
     def _play_audio_on_google_home(self, tts_url):
         try:
@@ -315,7 +321,7 @@ class VoiceAssistant:
                 },
                 "id": self.message_id
             }
-            self._debug_print(f"Sending play command to Google Home: {play_message}")
+            self._debug_print(f"Sending play command to Google Home: {json.dumps(play_message)}")
             self.ws.send(json.dumps(play_message))
 
             # Wait for the result
