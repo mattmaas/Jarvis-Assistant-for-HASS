@@ -81,26 +81,13 @@ def main():
                     for pipeline in pipelines:
                         pipeline_name = pipeline.get('name', 'Unknown')
                         pipeline_id = pipeline.get('id')
-                        # Add a star symbol (★) to indicate the selected pipeline
-                        if pipeline_id == assistant.ha_pipeline:
-                            pipeline_name = f"★ {pipeline_name}"
                         action = QAction(pipeline_name, ha_menu)
-                        action.setCheckable(True)
                         action.triggered.connect(lambda checked, p=pipeline_id: set_ha_pipeline(p))
                         ha_menu.addAction(action)
-                        
-                        # Set as checked if it's the preferred or default pipeline
-                        if pipeline_id == preferred_pipeline or (not preferred_pipeline and pipeline == default_pipeline):
-                            action.setChecked(True)
-                            set_ha_pipeline(pipeline_id)
                     
-                    # Ensure a pipeline is selected
-                    if not assistant.ha_pipeline and pipelines:
-                        first_pipeline = pipelines[0]
-                        set_ha_pipeline(first_pipeline.get('id'))
-                        debug_signals.debug_signal.emit(f"Set default pipeline: {first_pipeline.get('name')}")
-                    
-                    if not preferred_pipeline and default_pipeline:
+                    # Set default pipeline
+                    if pipelines:
+                        default_pipeline = next((p for p in pipelines if p.get('name', '').lower() == 'jarvis'), pipelines[0])
                         set_ha_pipeline(default_pipeline.get('id'))
                         debug_signals.debug_signal.emit(f"Set default pipeline: {default_pipeline.get('name')}")
                 else:
@@ -117,16 +104,6 @@ def main():
         if pipeline_id:
             assistant.ha_pipeline = pipeline_id
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
-            # Update the menu to show which pipeline is selected
-            for action in ha_menu.actions():
-                pipeline_name = action.text().lstrip('★ ').strip()
-                if pipeline_name == pipeline_id:
-                    action.setText(f"★ {pipeline_name}")
-                    action.setChecked(True)
-                else:
-                    action.setText(pipeline_name)
-                    action.setChecked(False)
-            debug_signals.debug_signal.emit(f"Updated menu: Pipeline '{pipeline_id}' is now starred")
         else:
             debug_signals.debug_signal.emit("No pipeline selected")
     
