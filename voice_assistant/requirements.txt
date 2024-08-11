@@ -3,3 +3,4 @@ pvporcupine==2.1.4
 SpeechRecognition==3.8.1
 PyInstaller==5.7.0
 pyaudio==0.2.13
+jaraco.text
