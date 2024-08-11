@@ -72,12 +72,18 @@ def main():
                         result = json.loads(ws.recv())
                         debug_signals.debug_signal.emit(f"Additional response: {result}")
                     
-                    pipelines = result.get("result", [])
+                    pipelines = result.get("result", {}).get("pipelines", [])
                     
                     for pipeline in pipelines:
-                        action = QAction(pipeline['name'], ha_menu)
-                        action.triggered.connect(lambda checked, p=pipeline['id']: set_ha_pipeline(p))
+                        action = QAction(pipeline.get('name', 'Unknown'), ha_menu)
+                        action.triggered.connect(lambda checked, p=pipeline.get('id'): set_ha_pipeline(p))
                         ha_menu.addAction(action)
+                    
+                    # Set the preferred pipeline if available
+                    preferred_pipeline = result.get("result", {}).get("preferred_pipeline")
+                    if preferred_pipeline:
+                        set_ha_pipeline(preferred_pipeline)
+                        debug_signals.debug_signal.emit(f"Set preferred pipeline: {preferred_pipeline}")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
             else:
@@ -89,8 +95,14 @@ def main():
     
     # Function to set the selected Home Assistant pipeline
     def set_ha_pipeline(pipeline_id):
-        assistant.ha_pipeline = pipeline_id
-        debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
+        if pipeline_id:
+            assistant.ha_pipeline = pipeline_id
+            debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
+            # Update the menu to show which pipeline is selected
+            for action in ha_menu.actions():
+                action.setChecked(action.text() == pipeline_id)
+        else:
+            debug_signals.debug_signal.emit("No pipeline selected")
     
     # Add action to update pipelines
     update_pipelines_action = ha_menu.addAction("Update Pipelines")
