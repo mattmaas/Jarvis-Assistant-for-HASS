@@ -3,7 +3,9 @@ import pvporcupine
 import pyaudio
 import struct
 import speech_recognition as sr
+import openai
 from debug_window import debug_signals
+from config import STT_PROVIDER, OPENAI_API_KEY
 
 class VoiceAssistant:
     def __init__(self, access_key, sensitivity=0.5):
@@ -13,6 +15,7 @@ class VoiceAssistant:
         self.pa = None
         self.audio_stream = None
         self.is_running = False
+        openai.api_key = OPENAI_API_KEY
 
     def start(self):
         if not self.is_running:
@@ -61,17 +64,34 @@ class VoiceAssistant:
             audio = recognizer.listen(source, timeout=7, phrase_time_limit=7)
 
         try:
-            command = recognizer.recognize_google(audio, show_all=True)
-            if command:
-                best_guess = command['alternative'][0]['transcript']
-                self._debug_print(f"Command recognized: {best_guess}")
-                self._execute_command(best_guess)
+            if STT_PROVIDER == "google":
+                command = recognizer.recognize_google(audio, show_all=True)
+                if command:
+                    best_guess = command['alternative'][0]['transcript']
+                    self._debug_print(f"Command recognized: {best_guess}")
+                    self._execute_command(best_guess)
+                else:
+                    self._debug_print("Could not understand the command")
+            elif STT_PROVIDER == "whisper":
+                audio_data = audio.get_wav_data()
+                file_obj = sr.AudioFile(io.BytesIO(audio_data))
+                with file_obj as source:
+                    audio_file = recognizer.record(source)
+                response = openai.Audio.transcribe("whisper-1", audio_file)
+                if response and 'text' in response:
+                    command = response['text']
+                    self._debug_print(f"Command recognized: {command}")
+                    self._execute_command(command)
+                else:
+                    self._debug_print("Could not understand the command")
             else:
-                self._debug_print("Could not understand the command")
+                self._debug_print("Invalid STT provider specified")
         except sr.UnknownValueError:
             self._debug_print("Could not understand the command")
         except sr.RequestError as e:
             self._debug_print(f"Could not request results; {e}")
+        except Exception as e:
+            self._debug_print(f"An error occurred: {e}")
 
     def _execute_command(self, command):
         # Implement your command processing logic here

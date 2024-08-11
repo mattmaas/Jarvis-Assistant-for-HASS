@@ -4,3 +4,4 @@ SpeechRecognition==3.8.1
 PyInstaller==5.7.0
 pyaudio==0.2.13
 jaraco.text
+openai==0.27.0
