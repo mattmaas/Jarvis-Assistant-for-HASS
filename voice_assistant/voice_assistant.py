@@ -5,18 +5,21 @@ import struct
 import speech_recognition as sr
 import openai
 import io
+import configparser
 from debug_window import debug_signals
-from config import STT_PROVIDER, OPENAI_API_KEY
 
 class VoiceAssistant:
-    def __init__(self, access_key, sensitivity=0.5):
-        self.access_key = access_key
+    def __init__(self, config_path, sensitivity=0.5):
+        self.config = configparser.ConfigParser()
+        self.config.read(config_path)
+        self.access_key = self.config['PORCUPINE']['ACCESS_KEY']
         self.sensitivity = sensitivity
         self.porcupine = None
         self.pa = None
         self.audio_stream = None
         self.is_running = False
-        openai.api_key = OPENAI_API_KEY
+        openai.api_key = self.config['OPENAI']['API_KEY']
+        self.stt_provider = self.config['STT']['PROVIDER']
 
     def start(self):
         if not self.is_running:
