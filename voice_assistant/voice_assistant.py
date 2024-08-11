@@ -199,6 +199,7 @@ class VoiceAssistant:
                         if response.get("id") == current_message_id:
                             if response.get("type") == "event":
                                 events.append(response)
+                                self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
                             elif response.get("type") == "result":
                                 if response.get("success"):
                                     self._debug_print(f"Command processed successfully (ID: {current_message_id})")
@@ -209,9 +210,11 @@ class VoiceAssistant:
                                         self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
                                     else:
                                         self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {current_message_id})")
+                                self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
                                 break
                         else:
                             self._debug_print(f"Received response for different ID: {response.get('id')}")
+                            self._debug_print(f"Response content: {json.dumps(response, indent=2)}")
                     else:
                         self._debug_print(f"Unexpected response structure: {response}")
                 
