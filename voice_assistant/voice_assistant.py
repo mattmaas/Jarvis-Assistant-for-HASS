@@ -53,9 +53,7 @@ class VoiceAssistant:
 
     def _run(self):
         try:
-            wake_words = list(self.wake_words.keys())
-            sensitivities = [self.sensitivity] * len(wake_words)
-            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=wake_words, sensitivities=sensitivities)
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"], sensitivities=[self.sensitivity])
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,
@@ -71,9 +69,8 @@ class VoiceAssistant:
 
                 keyword_index = self.porcupine.process(pcm)
                 if keyword_index >= 0:
-                    detected_wake_word = wake_words[keyword_index]
-                    self._debug_print(f"Wake word detected: {detected_wake_word}")
-                    self.ha_pipeline = self.wake_words[detected_wake_word]
+                    self._debug_print("Wake word 'Jarvis' detected")
+                    self.ha_pipeline = self.wake_words.get("jarvis", "01j51cps9cfghkdyd0vatrdf8x")
                     self._debug_print(f"Using pipeline: {self.ha_pipeline}")
                     self._process_speech()
 
