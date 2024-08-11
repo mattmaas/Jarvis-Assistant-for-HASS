@@ -8,6 +8,7 @@ import io
 import configparser
 import websocket
 import json
+import time
 from debug_window import debug_signals
 
 class VoiceAssistant:
@@ -139,7 +140,15 @@ class VoiceAssistant:
             self.ws.send(json.dumps(message))
             
             tts_url = None
+            response_speech = None
+            timeout = 30  # Set a timeout of 30 seconds
+            start_time = time.time()
+            
             while True:
+                if time.time() - start_time > timeout:
+                    self._debug_print("Timeout waiting for response from Home Assistant")
+                    break
+
                 response = json.loads(self.ws.recv())
                 self._debug_print(f"Received response: {response}")
                 
@@ -162,9 +171,11 @@ class VoiceAssistant:
                     elif response.get("type") == "result" and response.get("id") == self.message_id:
                         if response.get("success"):
                             if tts_url:
-                                self._debug_print("Command processed successfully.")
+                                self._debug_print("Command processed successfully with TTS URL.")
+                            elif response_speech:
+                                self._debug_print("Command processed successfully with text response, but no TTS URL.")
                             else:
-                                self._debug_print("Command processed successfully, but no TTS URL was received.")
+                                self._debug_print("Command processed successfully, but no TTS URL or text response received.")
                         else:
                             error = response.get('error', {})
                             if isinstance(error, dict):
@@ -177,6 +188,9 @@ class VoiceAssistant:
                         self._debug_print(f"Unexpected response type: {response.get('type')}")
                 else:
                     self._debug_print(f"Unexpected response structure: {response}")
+            
+            if not tts_url and not response_speech:
+                self._debug_print("No TTS URL or text response received. This might indicate an issue with the Home Assistant pipeline or TTS service.")
         except websocket.WebSocketException as e:
             self._debug_print(f"WebSocket error: {str(e)}")
         except json.JSONDecodeError:
