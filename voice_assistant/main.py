@@ -23,6 +23,7 @@ def main():
     # Create the debug window
     debug_window = DebugWindow()
     debug_signals.debug_signal.connect(debug_window.append_text)
+    debug_window.hide()  # Initially hide the debug window
     
     # Create the system tray icon
     icon = QIcon("icon.png")  # Make sure to have an icon file
