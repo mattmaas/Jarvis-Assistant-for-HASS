@@ -219,6 +219,8 @@ class VoiceAssistant:
                         self._debug_print(f"Unexpected response structure: {response}")
                 
                 # Process events after receiving the final result
+                tts_url = None
+                response_speech = None
                 for event in events:
                     event_data = event.get("event", {})
                     event_type = event_data.get("type")
@@ -227,6 +229,8 @@ class VoiceAssistant:
                         tts_url = tts_data.get("url")
                         if tts_url:
                             self._debug_print(f"TTS URL received: {tts_url} (ID: {current_message_id})")
+                            full_tts_url = f"{self.ha_url}{tts_url}"
+                            self._play_audio_on_google_home(full_tts_url)
                         else:
                             self._debug_print(f"No TTS URL received in the tts-end event (ID: {current_message_id})")
                     elif event_type == "intent-end":
@@ -235,11 +239,7 @@ class VoiceAssistant:
                         if response_speech:
                             self._debug_print(f"Response from Home Assistant: {response_speech} (ID: {current_message_id})")
                 
-                if tts_url:
-                    self._play_audio_on_google_home(tts_url)
-                elif response_speech:
-                    self._debug_print(f"No TTS URL, but text response received: {response_speech} (ID: {current_message_id})")
-                else:
+                if not tts_url and not response_speech:
                     self._debug_print(f"No TTS URL or text response received. This might indicate an issue with the Home Assistant pipeline or TTS service (ID: {current_message_id})")
             except websocket.WebSocketException as e:
                 self._debug_print(f"WebSocket error: {str(e)}")
@@ -308,7 +308,7 @@ class VoiceAssistant:
         print(formatted_message)
         debug_signals.debug_signal.emit(formatted_message)
 
-    def _play_audio_on_google_home(self, tts_url):
+    def _play_audio_on_google_home(self, full_tts_url):
         try:
             self.message_id += 1
             play_message = {
@@ -319,7 +319,7 @@ class VoiceAssistant:
                     "entity_id": "media_player.kitchen_display"
                 },
                 "service_data": {
-                    "media_content_id": tts_url,
+                    "media_content_id": full_tts_url,
                     "media_content_type": "music"
                 },
                 "id": self.message_id
@@ -330,8 +330,8 @@ class VoiceAssistant:
             # Wait for the result
             response = json.loads(self.ws.recv())
             if response.get("type") == "result" and response.get("success"):
-                self._debug_print("Audio playback command sent successfully to Google Home")
+                self._debug_print(f"Audio playback command sent successfully to Google Home (ID: {self.message_id})")
             else:
-                self._debug_print(f"Failed to send audio playback command: {response}")
+                self._debug_print(f"Failed to send audio playback command: {response} (ID: {self.message_id})")
         except Exception as e:
-            self._debug_print(f"Error playing audio on Google Home: {str(e)}")
+            self._debug_print(f"Error playing audio on Google Home: {str(e)} (ID: {self.message_id})")
