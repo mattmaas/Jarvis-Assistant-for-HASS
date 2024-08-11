@@ -30,6 +30,15 @@ class VoiceAssistant:
         self.ws = None
         self.message_id = 0  # Initialize message ID counter
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
+        self.wake_words = self._load_wake_words()
+
+    def _load_wake_words(self):
+        try:
+            with open('wakewords.json', 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            self._debug_print(f"Error loading wake words: {str(e)}")
+            return {"jarvis": "01j51cps9cfghkdyd0vatrdf8x"}  # Default to Jarvis if file can't be loaded
 
     def start(self):
         if not self.is_running:
@@ -44,7 +53,9 @@ class VoiceAssistant:
 
     def _run(self):
         try:
-            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"], sensitivities=[self.sensitivity])
+            wake_words = list(self.wake_words.keys())
+            sensitivities = [self.sensitivity] * len(wake_words)
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=wake_words, sensitivities=sensitivities)
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,
@@ -60,7 +71,10 @@ class VoiceAssistant:
 
                 keyword_index = self.porcupine.process(pcm)
                 if keyword_index >= 0:
-                    self._debug_print("Wake word detected!")
+                    detected_wake_word = wake_words[keyword_index]
+                    self._debug_print(f"Wake word detected: {detected_wake_word}")
+                    self.ha_pipeline = self.wake_words[detected_wake_word]
+                    self._debug_print(f"Using pipeline: {self.ha_pipeline}")
                     self._process_speech()
 
         finally:
