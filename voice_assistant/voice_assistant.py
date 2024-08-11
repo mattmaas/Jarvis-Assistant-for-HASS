@@ -111,43 +111,70 @@ class VoiceAssistant:
             self._debug_print("No Home Assistant pipeline selected.")
 
     def _send_to_home_assistant(self, command):
-        if not self.ws:
-            self._connect_to_home_assistant()
+        try:
+            if not self.ws or not self.ws.connected:
+                self._debug_print("WebSocket not connected. Attempting to reconnect...")
+                self._connect_to_home_assistant()
 
-        message = {
-            "type": "assist_pipeline/run",
-            "start_stage": "intent",
-            "end_stage": "tts",
-            "input": {
-                "text": command
-            },
-            "pipeline": self.ha_pipeline
-        }
-        self.ws.send(json.dumps(message))
-        result = json.loads(self.ws.recv())
-        if result.get("success"):
-            tts_url = result.get("result", {}).get("tts", {}).get("url")
-            if tts_url:
-                self._debug_print(f"TTS URL: {tts_url}")
+            if not self.ws or not self.ws.connected:
+                self._debug_print("Failed to establish WebSocket connection. Cannot send command.")
+                return
+
+            message = {
+                "type": "assist_pipeline/run",
+                "start_stage": "intent",
+                "end_stage": "tts",
+                "input": {
+                    "text": command
+                },
+                "pipeline": self.ha_pipeline
+            }
+            self._debug_print(f"Sending command to Home Assistant: {command}")
+            self.ws.send(json.dumps(message))
+            result = json.loads(self.ws.recv())
+            if result.get("success"):
+                tts_url = result.get("result", {}).get("tts", {}).get("url")
+                if tts_url:
+                    self._debug_print(f"TTS URL received: {tts_url}")
+                else:
+                    self._debug_print("No TTS URL received in the response.")
             else:
-                self._debug_print("No TTS URL received.")
-        else:
-            self._debug_print(f"Error: {result.get('error', {}).get('message', 'Unknown error')}")
+                error_message = result.get('error', {}).get('message', 'Unknown error')
+                self._debug_print(f"Error from Home Assistant: {error_message}")
+        except websocket.WebSocketException as e:
+            self._debug_print(f"WebSocket error: {str(e)}")
+        except json.JSONDecodeError:
+            self._debug_print("Received invalid JSON response from Home Assistant")
+        except Exception as e:
+            self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
 
     def _connect_to_home_assistant(self):
-        ws_protocol = "wss://" if self.ha_url.startswith("https://") else "ws://"
-        ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
-        self.ws = websocket.create_connection(ws_url)
-        auth_message = {
-            "type": "auth",
-            "access_token": self.ha_token
-        }
-        self.ws.send(json.dumps(auth_message))
-        result = json.loads(self.ws.recv())
-        if result.get("type") == "auth_ok":
-            self._debug_print("Connected to Home Assistant")
-        else:
-            self._debug_print("Failed to connect to Home Assistant")
+        try:
+            ws_protocol = "wss://" if self.ha_url.startswith("https://") else "ws://"
+            ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
+            self._debug_print(f"Attempting to connect to Home Assistant at {ws_url}")
+            self.ws = websocket.create_connection(ws_url, timeout=10)
+            auth_message = {
+                "type": "auth",
+                "access_token": self.ha_token
+            }
+            self._debug_print("Sending authentication message")
+            self.ws.send(json.dumps(auth_message))
+            result = json.loads(self.ws.recv())
+            if result.get("type") == "auth_ok":
+                self._debug_print("Successfully connected and authenticated with Home Assistant")
+            elif result.get("type") == "auth_invalid":
+                self._debug_print("Authentication failed: Invalid access token")
+            else:
+                self._debug_print(f"Unexpected response from Home Assistant: {result}")
+        except websocket.WebSocketTimeoutException:
+            self._debug_print("Connection to Home Assistant timed out")
+        except websocket.WebSocketConnectionClosedException:
+            self._debug_print("WebSocket connection to Home Assistant was closed unexpectedly")
+        except json.JSONDecodeError:
+            self._debug_print("Received invalid JSON response from Home Assistant")
+        except Exception as e:
+            self._debug_print(f"Failed to connect to Home Assistant: {str(e)}")
 
     def _debug_print(self, message):
         print(message)
