@@ -79,7 +79,11 @@ def main():
                     default_pipeline = next((p for p in pipelines if p.get('name', '').lower() == 'jarvis'), pipelines[0] if pipelines else None)
                     
                     for pipeline in pipelines:
-                        action = QAction(pipeline.get('name', 'Unknown'), ha_menu)
+                        pipeline_name = pipeline.get('name', 'Unknown')
+                        # Add a star (*) to indicate the selected pipeline
+                        if pipeline.get('id') == assistant.ha_pipeline:
+                            pipeline_name = f"* {pipeline_name}"
+                        action = QAction(pipeline_name, ha_menu)
                         action.setCheckable(True)
                         action.triggered.connect(lambda checked, p=pipeline.get('id'): set_ha_pipeline(p))
                         ha_menu.addAction(action)
@@ -108,7 +112,13 @@ def main():
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
             # Update the menu to show which pipeline is selected
             for action in ha_menu.actions():
-                action.setChecked(action.text() == pipeline_id)
+                pipeline_name = action.text().lstrip('* ')
+                if pipeline_name == pipeline_id:
+                    action.setText(f"* {pipeline_name}")
+                    action.setChecked(True)
+                else:
+                    action.setText(pipeline_name)
+                    action.setChecked(False)
         else:
             debug_signals.debug_signal.emit("No pipeline selected")
     
