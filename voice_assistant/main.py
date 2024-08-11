@@ -40,7 +40,9 @@ def main():
     # Function to update Home Assistant pipelines
     def update_ha_pipelines():
         ha_menu.clear()
-        ws = websocket.create_connection(f"ws://{assistant.ha_url}/api/websocket")
+        ws_protocol = "wss://" if assistant.ha_url.startswith("https://") else "ws://"
+        ws_url = f"{ws_protocol}{assistant.ha_url.split('://', 1)[1]}/api/websocket"
+        ws = websocket.create_connection(ws_url)
         auth_message = {
             "type": "auth",
             "access_token": assistant.ha_token

@@ -135,7 +135,9 @@ class VoiceAssistant:
             self._debug_print(f"Error: {result.get('error', {}).get('message', 'Unknown error')}")
 
     def _connect_to_home_assistant(self):
-        self.ws = websocket.create_connection(f"ws://{self.ha_url}/api/websocket")
+        ws_protocol = "wss://" if self.ha_url.startswith("https://") else "ws://"
+        ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
+        self.ws = websocket.create_connection(ws_url)
         auth_message = {
             "type": "auth",
             "access_token": self.ha_token
