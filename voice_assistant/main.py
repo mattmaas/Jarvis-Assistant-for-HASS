@@ -8,8 +8,8 @@ from config import PORCUPINE_ACCESS_KEY
 def main():
     app = QApplication(sys.argv)
     
-    # Create the voice assistant with the access key from config.py
-    assistant = VoiceAssistant(PORCUPINE_ACCESS_KEY)
+    # Create the voice assistant with the access key from config.py and increased sensitivity
+    assistant = VoiceAssistant(PORCUPINE_ACCESS_KEY, sensitivity=0.7)
     
     # Create the debug window
     debug_window = DebugWindow()

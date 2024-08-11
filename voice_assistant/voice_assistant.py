@@ -6,8 +6,9 @@ import speech_recognition as sr
 from debug_window import debug_signals
 
 class VoiceAssistant:
-    def __init__(self, access_key):
+    def __init__(self, access_key, sensitivity=0.5):
         self.access_key = access_key
+        self.sensitivity = sensitivity
         self.porcupine = None
         self.pa = None
         self.audio_stream = None
@@ -23,7 +24,7 @@ class VoiceAssistant:
 
     def _run(self):
         try:
-            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"])
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"], sensitivities=[self.sensitivity])
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,
@@ -54,12 +55,19 @@ class VoiceAssistant:
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
             self._debug_print("Listening for command...")
-            audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
+            recognizer.dynamic_energy_threshold = True
+            recognizer.energy_threshold = 300  # Lower value for increased sensitivity
+            recognizer.pause_threshold = 0.8  # Shorter pause for faster response
+            audio = recognizer.listen(source, timeout=7, phrase_time_limit=7)
 
         try:
-            command = recognizer.recognize_google(audio)
-            self._debug_print(f"Command recognized: {command}")
-            self._execute_command(command)
+            command = recognizer.recognize_google(audio, show_all=True)
+            if command:
+                best_guess = command['alternative'][0]['transcript']
+                self._debug_print(f"Command recognized: {best_guess}")
+                self._execute_command(best_guess)
+            else:
+                self._debug_print("Could not understand the command")
         except sr.UnknownValueError:
             self._debug_print("Could not understand the command")
         except sr.RequestError as e:
