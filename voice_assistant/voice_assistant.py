@@ -83,17 +83,17 @@ class VoiceAssistant:
                 else:
                     self._debug_print("Could not understand the command")
             elif self.stt_provider == "whisper":
-                audio_data = audio.get_wav_data()
-                file_obj = sr.AudioFile(io.BytesIO(audio_data))
-                with file_obj as source:
-                    audio_file = recognizer.record(source)
-                response = openai.Audio.transcribe("whisper-1", audio_file)
-                if response and 'text' in response:
-                    command = response['text']
-                    self._debug_print(f"Command recognized: {command}")
-                    self._execute_command(command)
-                else:
-                    self._debug_print("Could not understand the command")
+                try:
+                    audio_data = audio.get_raw_data()
+                    response = openai.Audio.transcribe("whisper-1", audio_data, model="whisper-1")
+                    if response and 'text' in response:
+                        command = response['text']
+                        self._debug_print(f"Command recognized: {command}")
+                        self._execute_command(command)
+                    else:
+                        self._debug_print("Could not understand the command")
+                except Exception as e:
+                    self._debug_print(f"Error in Whisper transcription: {e}")
             else:
                 self._debug_print("Invalid STT provider specified")
         except sr.UnknownValueError:

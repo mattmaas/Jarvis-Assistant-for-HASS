@@ -42,25 +42,31 @@ def main():
         ha_menu.clear()
         ws_protocol = "wss://" if assistant.ha_url.startswith("https://") else "ws://"
         ws_url = f"{ws_protocol}{assistant.ha_url.split('://', 1)[1]}/api/websocket"
-        ws = websocket.create_connection(ws_url)
-        auth_message = {
-            "type": "auth",
-            "access_token": assistant.ha_token
-        }
-        ws.send(json.dumps(auth_message))
-        ws.recv()  # Receive auth_ok message
-        
-        # Get pipelines
-        ws.send(json.dumps({"type": "assist_pipeline/pipeline/list"}))
-        result = json.loads(ws.recv())
-        pipelines = result.get("result", [])
-        
-        for pipeline in pipelines:
-            action = QAction(pipeline['name'], ha_menu)
-            action.triggered.connect(lambda checked, p=pipeline['id']: set_ha_pipeline(p))
-            ha_menu.addAction(action)
-        
-        ws.close()
+        debug_signals.debug_signal.emit(f"Connecting to WebSocket: {ws_url}")
+        try:
+            ws = websocket.create_connection(ws_url)
+            auth_message = {
+                "type": "auth",
+                "access_token": assistant.ha_token
+            }
+            ws.send(json.dumps(auth_message))
+            auth_result = json.loads(ws.recv())
+            debug_signals.debug_signal.emit(f"Auth result: {auth_result}")
+            
+            # Get pipelines
+            ws.send(json.dumps({"type": "assist_pipeline/pipeline/list"}))
+            result = json.loads(ws.recv())
+            debug_signals.debug_signal.emit(f"Pipelines result: {result}")
+            pipelines = result.get("result", [])
+            
+            for pipeline in pipelines:
+                action = QAction(pipeline['name'], ha_menu)
+                action.triggered.connect(lambda checked, p=pipeline['id']: set_ha_pipeline(p))
+                ha_menu.addAction(action)
+            
+            ws.close()
+        except Exception as e:
+            debug_signals.debug_signal.emit(f"Error updating pipelines: {e}")
     
     # Function to set the selected Home Assistant pipeline
     def set_ha_pipeline(pipeline_id):
