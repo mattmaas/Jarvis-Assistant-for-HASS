@@ -80,18 +80,25 @@ def main():
                     
                     for pipeline in pipelines:
                         pipeline_name = pipeline.get('name', 'Unknown')
+                        pipeline_id = pipeline.get('id')
                         # Add a star symbol (★) to indicate the selected pipeline
-                        if pipeline.get('id') == assistant.ha_pipeline:
+                        if pipeline_id == assistant.ha_pipeline:
                             pipeline_name = f"★ {pipeline_name}"
                         action = QAction(pipeline_name, ha_menu)
                         action.setCheckable(True)
-                        action.triggered.connect(lambda checked, p=pipeline.get('id'): set_ha_pipeline(p))
+                        action.triggered.connect(lambda checked, p=pipeline_id: set_ha_pipeline(p))
                         ha_menu.addAction(action)
                         
                         # Set as checked if it's the preferred or default pipeline
-                        if pipeline.get('id') == preferred_pipeline or (not preferred_pipeline and pipeline == default_pipeline):
+                        if pipeline_id == preferred_pipeline or (not preferred_pipeline and pipeline == default_pipeline):
                             action.setChecked(True)
-                            set_ha_pipeline(pipeline.get('id'))
+                            set_ha_pipeline(pipeline_id)
+                    
+                    # Ensure a pipeline is selected
+                    if not assistant.ha_pipeline and pipelines:
+                        first_pipeline = pipelines[0]
+                        set_ha_pipeline(first_pipeline.get('id'))
+                        debug_signals.debug_signal.emit(f"Set default pipeline: {first_pipeline.get('name')}")
                     
                     if not preferred_pipeline and default_pipeline:
                         set_ha_pipeline(default_pipeline.get('id'))
