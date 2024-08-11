@@ -1,22 +1,26 @@
 {
-  "alexa": {
-    "id": "alexa_en",
-    "name": "Alexa (English)"
+  "jarvis": {
+    "id": "01j51cps9cfghkdyd0vatrdf8x",
+    "name": "Jarvis"
   },
-  "computer": {
-    "id": "computer_en",
-    "name": "Computer (English)"
+  "arthur": {
+    "id": "01j1kh900aqb7n37tpj8r6n7m8",
+    "name": "Arthur"
   },
-  "hey siri": {
-    "id": "hey siri_en",
-    "name": "Hey Siri (English)"
+  "vader": {
+    "id": "01j50ghswc241weadn0csavaxn",
+    "name": "Vader"
   },
-  "ok google": {
-    "id": "ok google_en",
-    "name": "OK Google (English)"
+  "darth": {
+    "id": "01j50ghswc241weadn0csavaxn",
+    "name": "Darth"
   },
-  "porcupine": {
-    "id": "porcupine_en",
-    "name": "Porcupine (English)"
+  "professor": {
+    "id": "01j50gmjd83jbagext5ngzxc8d",
+    "name": "Professor"
+  },
+  "jimmy": {
+    "id": "01j50gqrmxvtay9wzw0tbx0mrm",
+    "name": "Jimmy"
   }
 }
