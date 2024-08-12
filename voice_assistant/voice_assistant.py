@@ -249,29 +249,6 @@ class VoiceAssistant:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
                 self._reconnect_to_home_assistant()
 
-    def _process_events(self, message_id, events):
-        tts_url = None
-        response_speech = None
-        for event in events:
-            event_data = event.get("event", {})
-            event_type = event_data.get("type")
-            if event_type == "tts-end":
-                tts_data = event_data.get("data", {}).get("tts_output", {})
-                tts_url = tts_data.get("url")
-                if tts_url:
-                    self._debug_print(f"TTS URL received: {tts_url} (ID: {message_id})")
-                    full_tts_url = f"{self.ha_url}{tts_url}"
-                    self._play_audio_on_google_home(full_tts_url)
-                else:
-                    self._debug_print(f"No TTS URL received in the tts-end event (ID: {message_id})")
-            elif event_type == "intent-end":
-                intent_output = event_data.get("data", {}).get("intent_output", {})
-                response_speech = intent_output.get("response", {}).get("speech", {}).get("plain", {}).get("speech")
-                if response_speech:
-                    self._debug_print(f"Response from Home Assistant: {response_speech} (ID: {message_id})")
-        
-        if not tts_url and not response_speech:
-            self._debug_print(f"No TTS URL or text response received. This might indicate an issue with the Home Assistant pipeline or TTS service (ID: {message_id})")
 
     def _connect_to_home_assistant(self):
         with self.ws_lock:
@@ -331,30 +308,3 @@ class VoiceAssistant:
         print(formatted_message)
         debug_signals.debug_signal.emit(formatted_message)
 
-    def _play_audio_on_google_home(self, full_tts_url):
-        try:
-            self.message_id += 1
-            play_message = {
-                "type": "call_service",
-                "domain": "media_player",
-                "service": "play_media",
-                "target": {
-                    "entity_id": "media_player.kitchen_display"
-                },
-                "service_data": {
-                    "media_content_id": full_tts_url,
-                    "media_content_type": "music"
-                },
-                "id": self.message_id
-            }
-            self._debug_print(f"Sending play command to Google Home: {json.dumps(play_message)}")
-            self.ws.send(json.dumps(play_message))
-
-            # Wait for the result
-            response = json.loads(self.ws.recv())
-            if response.get("type") == "result" and response.get("success"):
-                self._debug_print(f"Audio playback command sent successfully to Google Home (ID: {self.message_id})")
-            else:
-                self._debug_print(f"Failed to send audio playback command: {response} (ID: {self.message_id})")
-        except Exception as e:
-            self._debug_print(f"Error playing audio on Google Home: {str(e)} (ID: {self.message_id})")
