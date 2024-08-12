@@ -9,6 +9,7 @@ import configparser
 import websocket
 import json
 import time
+import requests
 from debug_window import debug_signals
 from datetime import datetime
 
@@ -222,6 +223,8 @@ class VoiceAssistant:
                             elif response.get("type") == "result":
                                 if response.get("success"):
                                     self._debug_print(f"Command processed successfully (ID: {response_id})")
+                                    # Get TTS URL and play audio
+                                    self._get_tts_url_and_play(current_message_id)
                                 else:
                                     error = response.get('error', {})
                                     if isinstance(error, dict):
@@ -247,6 +250,63 @@ class VoiceAssistant:
             except Exception as e:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
                 self._reconnect_to_home_assistant()
+
+    def _get_tts_url_and_play(self, message_id):
+        try:
+            self.message_id += 1
+            tts_message = {
+                "type": "assist_pipeline/tts_url",
+                "pipeline": self.ha_pipeline,
+                "id": self.message_id
+            }
+            self._debug_print(f"Requesting TTS URL: {json.dumps(tts_message)}")
+            self.ws.send(json.dumps(tts_message))
+
+            response_raw = self.ws.recv()
+            response = json.loads(response_raw)
+            self._debug_print(f"TTS URL response: {json.dumps(response, indent=2)}")
+
+            if response.get("success"):
+                tts_url = response.get("result", {}).get("url")
+                if tts_url:
+                    self._play_audio_on_kitchen_speaker(tts_url)
+                else:
+                    self._debug_print("TTS URL not found in the response")
+            else:
+                self._debug_print(f"Failed to get TTS URL: {response.get('error', 'Unknown error')}")
+
+        except Exception as e:
+            self._debug_print(f"Error getting TTS URL: {str(e)}")
+
+    def _play_audio_on_kitchen_speaker(self, tts_url):
+        try:
+            # Construct the service call to play audio on the kitchen speaker
+            service_call = {
+                "type": "call_service",
+                "domain": "media_player",
+                "service": "play_media",
+                "service_data": {
+                    "entity_id": "media_player.kitchen_speaker",  # Replace with your actual kitchen speaker entity ID
+                    "media_content_id": tts_url,
+                    "media_content_type": "music"
+                },
+                "id": self.message_id + 1
+            }
+            self._debug_print(f"Sending play audio command: {json.dumps(service_call)}")
+            self.ws.send(json.dumps(service_call))
+
+            # Wait for the response
+            response_raw = self.ws.recv()
+            response = json.loads(response_raw)
+            self._debug_print(f"Play audio response: {json.dumps(response, indent=2)}")
+
+            if response.get("success"):
+                self._debug_print("Audio playing on kitchen speaker")
+            else:
+                self._debug_print(f"Failed to play audio: {response.get('error', 'Unknown error')}")
+
+        except Exception as e:
+            self._debug_print(f"Error playing audio on kitchen speaker: {str(e)}")
 
     def _process_events(self, response_id, events):
         for event in events:
