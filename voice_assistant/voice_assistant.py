@@ -228,11 +228,11 @@ class VoiceAssistant:
                                 event_data = response.get("event", {}).get("data", {})
                                 event_type = response.get("event", {}).get("type")
                                 
-                                if "tts_url" in event_data:
-                                    tts_url = event_data["tts_url"]
-                                    self._debug_print(f"Found TTS URL: {tts_url}")
-                                
-                                if event_type == "tts_end":
+                                if event_type == "tts-end":
+                                    tts_output = event_data.get("tts_output", {})
+                                    tts_url = tts_output.get("url")
+                                    if tts_url:
+                                        self._debug_print(f"Found TTS URL: {tts_url}")
                                     tts_end_received = True
                                     self._debug_print("TTS end event received")
                             
@@ -256,8 +256,10 @@ class VoiceAssistant:
                     # Check if we have received all necessary components
                     if tts_url and tts_end_received and final_result_received:
                         self._debug_print("Received TTS URL, TTS end event, and final result. Processing complete.")
-                        self._process_events(current_message_id, events)
-                        self._play_audio_on_kitchen_speaker(tts_url)
+                        if events:
+                            self._process_events(current_message_id, events)
+                        full_tts_url = f"{self.ha_url}{tts_url}"
+                        self._play_audio_on_kitchen_speaker(full_tts_url)
                         break
 
             except websocket.WebSocketException as e:
