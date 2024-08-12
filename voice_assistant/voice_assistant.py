@@ -249,6 +249,23 @@ class VoiceAssistant:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
                 self._reconnect_to_home_assistant()
 
+    def _process_events(self, response_id, events):
+        for event in events:
+            event_type = event.get("event", {}).get("type")
+            event_data = event.get("event", {}).get("data", {})
+            
+            if event_type == "intent_start":
+                self._debug_print(f"Intent processing started (ID: {response_id})")
+            elif event_type == "intent_end":
+                self._debug_print(f"Intent processing ended (ID: {response_id})")
+            elif event_type == "tts_start":
+                self._debug_print(f"TTS processing started (ID: {response_id})")
+            elif event_type == "tts_end":
+                self._debug_print(f"TTS processing ended (ID: {response_id})")
+                if "tts_output" in event_data:
+                    self._debug_print(f"TTS output: {event_data['tts_output']}")
+            else:
+                self._debug_print(f"Unhandled event type: {event_type} (ID: {response_id})")
 
     def _connect_to_home_assistant(self):
         with self.ws_lock:
