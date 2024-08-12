@@ -274,6 +274,7 @@ class VoiceAssistant:
     def _play_audio_on_kitchen_speaker(self, tts_url):
         try:
             # Construct the service call to play audio on the kitchen speaker
+            self.message_id += 1
             service_call = {
                 "type": "call_service",
                 "domain": "media_player",
@@ -283,23 +284,37 @@ class VoiceAssistant:
                     "media_content_id": tts_url,
                     "media_content_type": "music"
                 },
-                "id": self.message_id + 1
+                "id": self.message_id
             }
             self._debug_print(f"Sending play audio command: {json.dumps(service_call)}")
             self.ws.send(json.dumps(service_call))
 
-            # Wait for the response
-            response_raw = self.ws.recv()
-            response = json.loads(response_raw)
-            self._debug_print(f"Play audio response: {json.dumps(response, indent=2)}")
+            # Wait for the response with a timeout
+            timeout = 10  # 10 seconds timeout
+            self.ws.settimeout(timeout)
+            try:
+                response_raw = self.ws.recv()
+                response = json.loads(response_raw)
+                self._debug_print(f"Play audio response: {json.dumps(response, indent=2)}")
 
-            if response.get("success"):
-                self._debug_print("Audio playing on kitchen speaker")
-            else:
-                self._debug_print(f"Failed to play audio: {response.get('error', 'Unknown error')}")
+                if response.get("type") == "result":
+                    if response.get("success"):
+                        self._debug_print("Audio playing on kitchen speaker")
+                    else:
+                        error = response.get('error', {})
+                        error_message = error.get('message', 'Unknown error')
+                        self._debug_print(f"Failed to play audio: {error_message}")
+                else:
+                    self._debug_print(f"Unexpected response type: {response.get('type')}")
+            except websocket.WebSocketTimeoutException:
+                self._debug_print(f"Timeout waiting for play audio response after {timeout} seconds")
 
+        except websocket.WebSocketException as e:
+            self._debug_print(f"WebSocket error while playing audio: {str(e)}")
+        except json.JSONDecodeError as e:
+            self._debug_print(f"Error decoding JSON response: {str(e)}")
         except Exception as e:
-            self._debug_print(f"Error playing audio on kitchen speaker: {str(e)}")
+            self._debug_print(f"Unexpected error playing audio on kitchen speaker: {str(e)}")
 
     def _process_events(self, response_id, events):
         for event in events:
