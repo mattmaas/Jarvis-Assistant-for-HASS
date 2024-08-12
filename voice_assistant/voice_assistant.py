@@ -200,10 +200,11 @@ class VoiceAssistant:
                 self.ws.send(json.dumps(message))
                 
                 events = []
-                timeout = 60  # Increased timeout to 60 seconds
+                timeout = 120  # Increased timeout to 120 seconds
                 start_time = time.time()
                 tts_url = None
                 tts_end_received = False
+                final_result_received = False
                 
                 while True:
                     if time.time() - start_time > timeout:
@@ -236,12 +237,9 @@ class VoiceAssistant:
                                     self._debug_print("TTS end event received")
                             
                             elif response_type == "result":
+                                final_result_received = True
                                 if response.get("success"):
                                     self._debug_print(f"Command processed successfully (ID: {response_id})")
-                                    if tts_url and tts_end_received:
-                                        self._play_audio_on_kitchen_speaker(tts_url)
-                                    else:
-                                        self._debug_print("TTS URL or TTS end event not received")
                                 else:
                                     error = response.get('error', {})
                                     if isinstance(error, dict):
@@ -250,17 +248,17 @@ class VoiceAssistant:
                                     else:
                                         self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {response_id})")
                                 self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
-                                
-                                # Only break if we've received both the TTS URL and the TTS end event
-                                if tts_url and tts_end_received:
-                                    self._process_events(response_id, events)
-                                    break
-                                else:
-                                    self._debug_print("Waiting for TTS URL and TTS end event before processing final result")
                         else:
                             self._debug_print(f"Received response for a different message ID: {response_id}")
                     else:
                         self._debug_print(f"Unexpected response structure: {response}")
+                    
+                    # Check if we have received all necessary components
+                    if tts_url and tts_end_received and final_result_received:
+                        self._debug_print("Received TTS URL, TTS end event, and final result. Processing complete.")
+                        self._process_events(current_message_id, events)
+                        self._play_audio_on_kitchen_speaker(tts_url)
+                        break
 
             except websocket.WebSocketException as e:
                 self._debug_print(f"WebSocket error: {str(e)}")
