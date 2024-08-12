@@ -200,9 +200,10 @@ class VoiceAssistant:
                 self.ws.send(json.dumps(message))
                 
                 events = []
-                timeout = 30  # Set a timeout of 30 seconds
+                timeout = 60  # Increased timeout to 60 seconds
                 start_time = time.time()
                 tts_url = None
+                tts_end_received = False
                 
                 while True:
                     if time.time() - start_time > timeout:
@@ -223,19 +224,24 @@ class VoiceAssistant:
                                 events.append(response)
                                 self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
                                 
-                                # Check for TTS URL in the event
                                 event_data = response.get("event", {}).get("data", {})
+                                event_type = response.get("event", {}).get("type")
+                                
                                 if "tts_url" in event_data:
                                     tts_url = event_data["tts_url"]
                                     self._debug_print(f"Found TTS URL: {tts_url}")
+                                
+                                if event_type == "tts_end":
+                                    tts_end_received = True
+                                    self._debug_print("TTS end event received")
                             
                             elif response_type == "result":
                                 if response.get("success"):
                                     self._debug_print(f"Command processed successfully (ID: {response_id})")
-                                    if tts_url:
+                                    if tts_url and tts_end_received:
                                         self._play_audio_on_kitchen_speaker(tts_url)
                                     else:
-                                        self._debug_print("No TTS URL found in the events")
+                                        self._debug_print("TTS URL or TTS end event not received")
                                 else:
                                     error = response.get('error', {})
                                     if isinstance(error, dict):
@@ -245,9 +251,12 @@ class VoiceAssistant:
                                         self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {response_id})")
                                 self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
                                 
-                                # Process events for this message ID
-                                self._process_events(response_id, events)
-                                break
+                                # Only break if we've received both the TTS URL and the TTS end event
+                                if tts_url and tts_end_received:
+                                    self._process_events(response_id, events)
+                                    break
+                                else:
+                                    self._debug_print("Waiting for TTS URL and TTS end event before processing final result")
                         else:
                             self._debug_print(f"Received response for a different message ID: {response_id}")
                     else:
