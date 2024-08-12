@@ -202,6 +202,7 @@ class VoiceAssistant:
                 events = []
                 timeout = 30  # Set a timeout of 30 seconds
                 start_time = time.time()
+                tts_url = None
                 
                 while True:
                     if time.time() - start_time > timeout:
@@ -215,16 +216,26 @@ class VoiceAssistant:
                     
                     if isinstance(response, dict):
                         response_id = response.get("id")
+                        response_type = response.get("type")
                         
                         if response_id == current_message_id:
-                            if response.get("type") == "event":
+                            if response_type == "event":
                                 events.append(response)
                                 self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
-                            elif response.get("type") == "result":
+                                
+                                # Check for TTS URL in the event
+                                event_data = response.get("event", {}).get("data", {})
+                                if "tts_url" in event_data:
+                                    tts_url = event_data["tts_url"]
+                                    self._debug_print(f"Found TTS URL: {tts_url}")
+                            
+                            elif response_type == "result":
                                 if response.get("success"):
                                     self._debug_print(f"Command processed successfully (ID: {response_id})")
-                                    # Get TTS URL and play audio
-                                    self._get_tts_url_and_play(current_message_id)
+                                    if tts_url:
+                                        self._play_audio_on_kitchen_speaker(tts_url)
+                                    else:
+                                        self._debug_print("No TTS URL found in the events")
                                 else:
                                     error = response.get('error', {})
                                     if isinstance(error, dict):
@@ -250,33 +261,6 @@ class VoiceAssistant:
             except Exception as e:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
                 self._reconnect_to_home_assistant()
-
-    def _get_tts_url_and_play(self, message_id):
-        try:
-            self.message_id += 1
-            tts_message = {
-                "type": "assist_pipeline/tts_url",
-                "pipeline": self.ha_pipeline,
-                "id": self.message_id
-            }
-            self._debug_print(f"Requesting TTS URL: {json.dumps(tts_message)}")
-            self.ws.send(json.dumps(tts_message))
-
-            response_raw = self.ws.recv()
-            response = json.loads(response_raw)
-            self._debug_print(f"TTS URL response: {json.dumps(response, indent=2)}")
-
-            if response.get("success"):
-                tts_url = response.get("result", {}).get("url")
-                if tts_url:
-                    self._play_audio_on_kitchen_speaker(tts_url)
-                else:
-                    self._debug_print("TTS URL not found in the response")
-            else:
-                self._debug_print(f"Failed to get TTS URL: {response.get('error', 'Unknown error')}")
-
-        except Exception as e:
-            self._debug_print(f"Error getting TTS URL: {str(e)}")
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
         try:
