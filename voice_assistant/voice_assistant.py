@@ -198,7 +198,7 @@ class VoiceAssistant:
                 self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
                 self.ws.send(json.dumps(message))
                 
-                events = {}
+                events = []
                 timeout = 30  # Set a timeout of 30 seconds
                 start_time = time.time()
                 
@@ -214,29 +214,28 @@ class VoiceAssistant:
                     
                     if isinstance(response, dict):
                         response_id = response.get("id")
-                        if response_id not in events:
-                            events[response_id] = []
                         
-                        if response.get("type") == "event":
-                            events[response_id].append(response)
-                            self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
-                        elif response.get("type") == "result":
-                            if response.get("success"):
-                                self._debug_print(f"Command processed successfully (ID: {response_id})")
-                            else:
-                                error = response.get('error', {})
-                                if isinstance(error, dict):
-                                    error_message = error.get('message', 'Unknown error')
-                                    self._debug_print(f"Error from Home Assistant: {error_message} (ID: {response_id})")
+                        if response_id == current_message_id:
+                            if response.get("type") == "event":
+                                events.append(response)
+                                self._debug_print(f"Received event: {json.dumps(response, indent=2)}")
+                            elif response.get("type") == "result":
+                                if response.get("success"):
+                                    self._debug_print(f"Command processed successfully (ID: {response_id})")
                                 else:
-                                    self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {response_id})")
-                            self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
-                            
-                            # Process events for this message ID
-                            self._process_events(response_id, events[response_id])
-                            
-                            if response_id == current_message_id:
+                                    error = response.get('error', {})
+                                    if isinstance(error, dict):
+                                        error_message = error.get('message', 'Unknown error')
+                                        self._debug_print(f"Error from Home Assistant: {error_message} (ID: {response_id})")
+                                    else:
+                                        self._debug_print(f"Unexpected 'error' structure in response: {error} (ID: {response_id})")
+                                self._debug_print(f"Final result: {json.dumps(response, indent=2)}")
+                                
+                                # Process events for this message ID
+                                self._process_events(response_id, events)
                                 break
+                        else:
+                            self._debug_print(f"Received response for a different message ID: {response_id}")
                     else:
                         self._debug_print(f"Unexpected response structure: {response}")
 
