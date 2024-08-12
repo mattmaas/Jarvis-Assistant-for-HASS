@@ -280,7 +280,7 @@ class VoiceAssistant:
                 "domain": "media_player",
                 "service": "play_media",
                 "service_data": {
-                    "entity_id": "media_player.kitchen_speaker",  # Replace with your actual kitchen speaker entity ID
+                    "entity_id": "media_player.kitchen_display",  # Updated kitchen speaker entity ID
                     "media_content_id": tts_url,
                     "media_content_type": "music"
                 },
