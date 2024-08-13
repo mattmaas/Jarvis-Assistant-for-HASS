@@ -34,13 +34,7 @@ class VoiceAssistant:
         self.wake_words = self._load_wake_words()
 
     def _load_wake_words(self):
-        try:
-            with open('wakewords.json', 'r') as f:
-                wake_words_data = json.load(f)
-                return {key: {'id': value['id'], 'name': value['name']} for key, value in wake_words_data.items()}
-        except Exception as e:
-            self._debug_print(f"Error loading wake words: {str(e)}")
-            return {"porcupine": {"id": "porcupine_en", "name": "Porcupine"}}  # Default to Porcupine if file can't be loaded
+        return {"jarvis": {"id": "jarvis_en", "name": "Jarvis"}}
 
     def start(self):
         if not self.is_running:
@@ -55,9 +49,7 @@ class VoiceAssistant:
 
     def _run(self):
         try:
-            keywords = list(self.wake_words.keys())
-            sensitivities = [self.sensitivity] * len(keywords)
-            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=keywords, sensitivities=sensitivities)
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"], sensitivities=[self.sensitivity])
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,
@@ -73,11 +65,7 @@ class VoiceAssistant:
 
                 keyword_index = self.porcupine.process(pcm)
                 if keyword_index >= 0:
-                    detected_keyword = keywords[keyword_index]
-                    wake_word_info = self.wake_words[detected_keyword]
-                    self._debug_print(f"Wake word '{wake_word_info['name']}' detected")
-                    self.ha_pipeline = wake_word_info['id']
-                    self._debug_print(f"Using pipeline: {self.ha_pipeline}")
+                    self._debug_print("Wake word 'Jarvis' detected")
                     self._process_speech()
 
         finally:
