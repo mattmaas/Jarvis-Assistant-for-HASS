@@ -14,6 +14,7 @@ import pyautogui
 from debug_window import debug_signals
 from datetime import datetime
 from openrgb_control import OpenRGBControl
+from typing import Dict, List
 
 class JarvisAssistant:
     def __init__(self, config_path, sensitivity=0.5):
@@ -37,7 +38,10 @@ class JarvisAssistant:
         self.rgb_control = OpenRGBControl()
 
     def _load_wake_words(self):
-        return {"jarvis": {"id": "jarvis_en", "name": "Jarvis"}}
+        with open('wakewords.json', 'r') as f:
+            wake_words = json.load(f)
+        self.pipeline_keywords = {pipeline['name']: pipeline.get('keywords', []) for pipeline in wake_words}
+        return {word['name']: {"id": word.get('id', word['name']), "name": word['name']} for word in wake_words}
 
     def start(self):
         if not self.is_running:
@@ -183,11 +187,23 @@ class JarvisAssistant:
         except Exception as e:
             self._debug_print(f"An error occurred: {e}")
 
+    def _select_pipeline(self, text: str) -> str:
+        words = text.lower().split()
+        for pipeline, keywords in self.pipeline_keywords.items():
+            if any(keyword in words for keyword in keywords):
+                return pipeline
+        return self.ha_pipeline  # Return default pipeline if no keywords match
+
+    def _execute_command(self, command: str):
+        pipeline = self._select_pipeline(command)
+        self._send_to_home_assistant(command, pipeline)
+
     def _execute_command(self, command):
         self._debug_print(f"Executing command: {command}")
-        self._send_to_home_assistant(command)
+        pipeline = self._select_pipeline(command)
+        self._send_to_home_assistant(command, pipeline)
 
-    def _send_to_home_assistant(self, command):
+    def _send_to_home_assistant(self, command, pipeline):
         with self.ws_lock:
             try:
                 if not self.ws or not self.ws.connected:
@@ -205,7 +221,7 @@ class JarvisAssistant:
                     "input": {
                         "text": command
                     },
-                    "pipeline": self.ha_pipeline,
+                    "pipeline": pipeline,
                     "id": current_message_id
                 }
                 self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
