@@ -4,7 +4,7 @@ import websocket
 import json
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
-from voice_assistant import VoiceAssistant
+from voice_assistant import JarvisAssistant
 from debug_window import DebugWindow, debug_signals
 import os
 import winreg
@@ -18,8 +18,8 @@ CONFIG_PATH = os.path.join(current_dir, 'config.ini')
 def main():
     app = QApplication(sys.argv)
     
-    # Create the voice assistant with the config path and increased sensitivity
-    assistant = VoiceAssistant(CONFIG_PATH, sensitivity=0.7)
+    # Create the Jarvis assistant with the config path and increased sensitivity
+    assistant = JarvisAssistant(CONFIG_PATH, sensitivity=0.7)
     
     # Create the debug window
     debug_window = DebugWindow()
@@ -128,11 +128,11 @@ def main():
         try:
             with winreg.OpenKey(key, key_path, 0, winreg.KEY_ALL_ACCESS) as registry_key:
                 if enable:
-                    winreg.SetValueEx(registry_key, "VoiceAssistant", 0, winreg.REG_SZ, sys.argv[0])
+                    winreg.SetValueEx(registry_key, "JarvisAssistant", 0, winreg.REG_SZ, sys.argv[0])
                     enable_startup_action.setChecked(True)
                     disable_startup_action.setChecked(False)
                 else:
-                    winreg.DeleteValue(registry_key, "VoiceAssistant")
+                    winreg.DeleteValue(registry_key, "JarvisAssistant")
                     enable_startup_action.setChecked(False)
                     disable_startup_action.setChecked(True)
         except WindowsError:
@@ -144,7 +144,7 @@ def main():
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
         try:
             with winreg.OpenKey(key, key_path, 0, winreg.KEY_READ) as registry_key:
-                value, _ = winreg.QueryValueEx(registry_key, "VoiceAssistant")
+                value, _ = winreg.QueryValueEx(registry_key, "JarvisAssistant")
                 if value == sys.argv[0]:
                     enable_startup_action.setChecked(True)
                     disable_startup_action.setChecked(False)

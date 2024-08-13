@@ -15,7 +15,7 @@ from debug_window import debug_signals
 from datetime import datetime
 from openrgb_control import OpenRGBControl
 
-class VoiceAssistant:
+class JarvisAssistant:
     def __init__(self, config_path, sensitivity=0.5):
         self.config = configparser.ConfigParser()
         self.config.read(config_path)
