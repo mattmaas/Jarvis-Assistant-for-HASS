@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon
 from voice_assistant import VoiceAssistant
 from debug_window import DebugWindow, debug_signals
 import os
+import winreg
 
 # Get the directory of the current script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +38,13 @@ def main():
     
     # Create a submenu for Home Assistant pipelines
     ha_menu = menu.addMenu("Home Assistant Pipelines")
+
+    # Create a submenu for startup options
+    startup_menu = menu.addMenu("Startup Options")
+    enable_startup_action = startup_menu.addAction("Enable on Startup")
+    disable_startup_action = startup_menu.addAction("Disable on Startup")
+    enable_startup_action.setCheckable(True)
+    disable_startup_action.setCheckable(True)
     
     # Function to update Home Assistant pipelines
     def update_ha_pipelines():
@@ -113,11 +121,47 @@ def main():
     
     exit_action = menu.addAction("Exit")
     
+    # Function to enable/disable startup
+    def toggle_startup(enable):
+        key = winreg.HKEY_CURRENT_USER
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        try:
+            with winreg.OpenKey(key, key_path, 0, winreg.KEY_ALL_ACCESS) as registry_key:
+                if enable:
+                    winreg.SetValueEx(registry_key, "VoiceAssistant", 0, winreg.REG_SZ, sys.argv[0])
+                    enable_startup_action.setChecked(True)
+                    disable_startup_action.setChecked(False)
+                else:
+                    winreg.DeleteValue(registry_key, "VoiceAssistant")
+                    enable_startup_action.setChecked(False)
+                    disable_startup_action.setChecked(True)
+        except WindowsError:
+            debug_signals.debug_signal.emit(f"Error {'enabling' if enable else 'disabling'} startup")
+
+    # Check current startup status
+    def check_startup_status():
+        key = winreg.HKEY_CURRENT_USER
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        try:
+            with winreg.OpenKey(key, key_path, 0, winreg.KEY_READ) as registry_key:
+                value, _ = winreg.QueryValueEx(registry_key, "VoiceAssistant")
+                if value == sys.argv[0]:
+                    enable_startup_action.setChecked(True)
+                    disable_startup_action.setChecked(False)
+                else:
+                    enable_startup_action.setChecked(False)
+                    disable_startup_action.setChecked(True)
+        except WindowsError:
+            enable_startup_action.setChecked(False)
+            disable_startup_action.setChecked(True)
+
     # Connect menu actions
     start_action.triggered.connect(assistant.start)
     stop_action.triggered.connect(assistant.stop)  # The orange color is now set in the stop() method
     debug_action.triggered.connect(debug_window.show)
     exit_action.triggered.connect(lambda: (assistant.rgb_control.set_profile("lava"), app.quit()))
+    enable_startup_action.triggered.connect(lambda: toggle_startup(True))
+    disable_startup_action.triggered.connect(lambda: toggle_startup(False))
     
     tray.setContextMenu(menu)
     tray.show()
@@ -132,6 +176,9 @@ def main():
     
     # Update pipelines on startup
     update_ha_pipelines()
+
+    # Check startup status on launch
+    check_startup_status()
     
     sys.exit(app.exec_())
 
