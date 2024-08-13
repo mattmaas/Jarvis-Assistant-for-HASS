@@ -10,12 +10,20 @@ class OpenRGBControl:
 
     def connect(self):
         try:
-            self.client = openrgb.OpenRGBClient()
-            self.mic = self.client.get_devices_by_type(DeviceType.MICROPHONE)[0]
-            self.connected = True
-            print("Connected to OpenRGB")
-        except Exception as e:
+            self.client = openrgb.OpenRGBClient(timeout=5)  # Set a 5-second timeout
+            devices = self.client.get_devices_by_type(DeviceType.MICROPHONE)
+            if devices:
+                self.mic = devices[0]
+                self.connected = True
+                print("Connected to OpenRGB")
+            else:
+                print("No microphone device found in OpenRGB")
+                self.connected = False
+        except openrgb.OpenRGBClientError as e:
             print(f"Failed to connect to OpenRGB: {e}")
+            self.connected = False
+        except Exception as e:
+            print(f"Unexpected error connecting to OpenRGB: {e}")
             self.connected = False
 
     def set_profile(self, profile_name):
