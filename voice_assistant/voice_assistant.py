@@ -12,6 +12,7 @@ import time
 import requests
 from debug_window import debug_signals
 from datetime import datetime
+from openrgb_control import OpenRGBControl
 
 class VoiceAssistant:
     def __init__(self, config_path, sensitivity=0.5):
@@ -32,6 +33,7 @@ class VoiceAssistant:
         self.message_id = 0  # Initialize message ID counter
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
         self.wake_words = self._load_wake_words()
+        self.rgb_control = OpenRGBControl()
 
     def _load_wake_words(self):
         return {"jarvis": {"id": "jarvis_en", "name": "Jarvis"}}
@@ -40,12 +42,15 @@ class VoiceAssistant:
         if not self.is_running:
             self.is_running = True
             self._connect_to_home_assistant()  # Connect to Home Assistant when starting
+            self.rgb_control.set_profile("ice")  # Set OpenRGB profile to 'ice'
             threading.Thread(target=self._run).start()
             threading.Thread(target=self._keep_alive).start()  # Start keep-alive thread
 
     def stop(self):
         self.is_running = False
         self._disconnect_from_home_assistant()
+        self.rgb_control.set_profile("red")  # Set OpenRGB profile to 'red'
+        self.rgb_control.close()
 
     def _run(self):
         try:
@@ -67,7 +72,9 @@ class VoiceAssistant:
                 if keyword_index >= 0:
                     self._debug_print("Wake word 'Jarvis' detected")
                     self._play_chime()
+                    self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
                     self._process_speech()
+                    self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing
 
         finally:
             if self.audio_stream:

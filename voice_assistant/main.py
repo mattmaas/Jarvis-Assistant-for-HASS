@@ -115,7 +115,7 @@ def main():
     
     # Connect menu actions
     start_action.triggered.connect(assistant.start)
-    stop_action.triggered.connect(assistant.stop)
+    stop_action.triggered.connect(lambda: (assistant.stop(), assistant.rgb_control.set_mic_color((255, 165, 0))))  # Set orange color when stopped
     debug_action.triggered.connect(debug_window.show)
     exit_action.triggered.connect(app.quit)
     
