@@ -198,43 +198,47 @@ class JarvisAssistant:
 
     def _select_pipeline(self, text: str) -> str:
         words = text.lower().split()
-        for pipeline, keywords in self.pipeline_keywords.items():
+        for pipeline_name, data in self.wake_words.items():
+            keywords = self.pipeline_keywords.get(pipeline_name, [])
             if any(keyword in words for keyword in keywords):
-                return pipeline
-        return self.ha_pipeline  # Return default pipeline if no keywords match
+                return data['id']
+        return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
 
     def _execute_command(self, command: str):
-        pipeline = self._select_pipeline(command)
-        self._send_to_home_assistant(command, pipeline)
-
-    def _execute_command(self, command):
         self._debug_print(f"Executing command: {command}")
-        pipeline = self._select_pipeline(command)
-        self._send_to_home_assistant(command, pipeline)
+        pipeline_id = self._select_pipeline(command)
+        self._send_to_home_assistant(command, pipeline_id)
 
-    def _send_to_home_assistant(self, command, pipeline):
-        with self.ws_lock:
-            try:
-                if not self.ws or not self.ws.connected:
-                    self._debug_print("WebSocket not connected. Attempting to reconnect...")
-                    if not self._connect_to_home_assistant():
-                        self._debug_print("Failed to establish WebSocket connection. Cannot send command.")
-                        return
+    def _send_to_home_assistant(self, command, pipeline_id):
+        max_retries = 3
+        retry_delay = 5  # seconds
 
-                self.message_id += 1
-                current_message_id = self.message_id
-                message = {
-                    "type": "assist_pipeline/run",
-                    "start_stage": "intent",
-                    "end_stage": "tts",
-                    "input": {
-                        "text": command
-                    },
-                    "pipeline": pipeline,
-                    "id": current_message_id
-                }
-                self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
-                self.ws.send(json.dumps(message))
+        for attempt in range(max_retries):
+            with self.ws_lock:
+                try:
+                    if not self.ws or not self.ws.connected:
+                        self._debug_print(f"WebSocket not connected. Attempting to reconnect... (Attempt {attempt + 1}/{max_retries})")
+                        if not self._connect_to_home_assistant():
+                            if attempt == max_retries - 1:
+                                self._debug_print("Failed to establish WebSocket connection after all attempts. Cannot send command.")
+                                return
+                            time.sleep(retry_delay)
+                            continue
+
+                    self.message_id += 1
+                    current_message_id = self.message_id
+                    message = {
+                        "type": "assist_pipeline/run",
+                        "start_stage": "intent",
+                        "end_stage": "tts",
+                        "input": {
+                            "text": command
+                        },
+                        "pipeline": pipeline_id,
+                        "id": current_message_id
+                    }
+                    self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
+                    self.ws.send(json.dumps(message))
                 
                 events = []
                 timeout = 120  # Increased timeout to 120 seconds
