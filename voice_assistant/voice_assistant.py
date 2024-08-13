@@ -214,8 +214,8 @@ class JarvisAssistant:
         retry_delay = 5  # seconds
 
         for attempt in range(max_retries):
-            with self.ws_lock:
-                try:
+            try:
+                with self.ws_lock:
                     if not self.ws or not self.ws.connected:
                         self._debug_print(f"WebSocket not connected. Attempting to reconnect... (Attempt {attempt + 1}/{max_retries})")
                         if not self._connect_to_home_assistant():
@@ -280,12 +280,12 @@ class JarvisAssistant:
                         self._play_audio_on_kitchen_speaker(full_tts_url)
                         return  # Successfully processed the command
 
-                except websocket.WebSocketException as e:
-                    self._debug_print(f"WebSocket error: {str(e)}")
-                except json.JSONDecodeError:
-                    self._debug_print("Received invalid JSON response from Home Assistant")
-                except Exception as e:
-                    self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
+            except websocket.WebSocketException as e:
+                self._debug_print(f"WebSocket error: {str(e)}")
+            except json.JSONDecodeError:
+                self._debug_print("Received invalid JSON response from Home Assistant")
+            except Exception as e:
+                self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
 
             self._reconnect_to_home_assistant()
             if attempt < max_retries - 1:
