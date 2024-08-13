@@ -66,6 +66,7 @@ class VoiceAssistant:
                 keyword_index = self.porcupine.process(pcm)
                 if keyword_index >= 0:
                     self._debug_print("Wake word 'Jarvis' detected")
+                    self._play_chime()
                     self._process_speech()
 
         finally:
@@ -370,6 +371,48 @@ class VoiceAssistant:
         self._debug_print(f"Sending subscribe message: {json.dumps(subscribe_message)}")
         self.ws.send(json.dumps(subscribe_message))
         self._debug_print(f"Subscribed to state_changed events (ID: {self.message_id})")
+
+    def _play_chime(self):
+        try:
+            self.message_id += 1
+            chime_url = f"{self.ha_url}/local/chime.mp3"  # Adjust this URL to the actual location of your chime sound file
+            service_call = {
+                "type": "call_service",
+                "domain": "media_player",
+                "service": "play_media",
+                "service_data": {
+                    "entity_id": "media_player.kitchen_display",
+                    "media_content_id": chime_url,
+                    "media_content_type": "music"
+                },
+                "id": self.message_id
+            }
+            self._debug_print(f"Sending play chime command: {json.dumps(service_call)}")
+            with self.ws_lock:
+                self.ws.send(json.dumps(service_call))
+
+            # Wait for the response with a timeout
+            timeout = 5  # 5 seconds timeout
+            self.ws.settimeout(timeout)
+            try:
+                response_raw = self.ws.recv()
+                response = json.loads(response_raw)
+                self._debug_print(f"Play chime response: {json.dumps(response, indent=2)}")
+
+                if response.get("type") == "result":
+                    if response.get("success"):
+                        self._debug_print("Chime played successfully")
+                    else:
+                        error = response.get('error', {})
+                        error_message = error.get('message', 'Unknown error')
+                        self._debug_print(f"Failed to play chime: {error_message}")
+                else:
+                    self._debug_print(f"Unexpected response type: {response.get('type')}")
+            except websocket.WebSocketTimeoutException:
+                self._debug_print(f"Timeout waiting for play chime response after {timeout} seconds")
+
+        except Exception as e:
+            self._debug_print(f"Error playing chime: {str(e)}")
 
     def _debug_print(self, message):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
