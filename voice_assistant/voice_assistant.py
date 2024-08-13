@@ -43,11 +43,28 @@ class VoiceAssistant:
         if not self.is_running:
             self.is_running = True
             self._connect_to_home_assistant()  # Connect to Home Assistant when starting
-            self.rgb_control.set_profile("ice")  # Load 'ice' profile
+            self._set_ice_profile()  # Load 'ice' profile
             threading.Thread(target=self._run).start()
             threading.Thread(target=self._keep_alive).start()  # Start keep-alive thread
         else:
-            self.rgb_control.set_profile("ice")  # Ensure 'ice' profile is set when restarting
+            self._set_ice_profile()  # Ensure 'ice' profile is set when restarting
+
+    def _set_ice_profile(self):
+        max_retries = 3
+        retry_delay = 60  # seconds
+
+        for attempt in range(max_retries):
+            try:
+                self.rgb_control.set_profile("ice")
+                self._debug_print("Successfully set 'ice' profile")
+                return
+            except Exception as e:
+                self._debug_print(f"Error setting 'ice' profile (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                if attempt < max_retries - 1:
+                    self._debug_print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    self._debug_print("Failed to set 'ice' profile after all attempts")
 
     def stop(self):
         self.is_running = False

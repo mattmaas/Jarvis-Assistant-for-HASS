@@ -1,3 +1,4 @@
+import time
 from openrgb import OpenRGBClient
 from openrgb.utils import RGBColor, DeviceType
 
@@ -8,16 +9,30 @@ class OpenRGBControl:
         self.init_rgb_control()
 
     def init_rgb_control(self):
-        try:
-            self.client = OpenRGBClient()
-            self.device = self.client.get_devices_by_type(DeviceType.MICROPHONE)[0]
-            print("RGB control initialized successfully")
-        except Exception as e:
-            print(f"Error initializing RGB control: {str(e)}")
+        max_retries = 3
+        retry_delay = 60  # seconds
+
+        for attempt in range(max_retries):
+            try:
+                self.client = OpenRGBClient()
+                self.device = self.client.get_devices_by_type(DeviceType.MICROPHONE)[0]
+                print("RGB control initialized successfully")
+                return
+            except Exception as e:
+                print(f"Error initializing RGB control (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    print("Failed to initialize RGB control after all attempts")
 
     def set_profile(self, profile_name):
         if not self.client:
-            print("RGB client not initialized")
+            print("RGB client not initialized, attempting to reconnect...")
+            self.init_rgb_control()
+
+        if not self.client:
+            print("RGB client still not initialized after retry")
             return
 
         try:
@@ -25,6 +40,14 @@ class OpenRGBControl:
             print(f"Set RGB profile to {profile_name}")
         except Exception as e:
             print(f"Error setting RGB profile: {str(e)}")
+            print("Attempting to reconnect and retry...")
+            self.init_rgb_control()
+            if self.client:
+                try:
+                    self.client.load_profile(profile_name)
+                    print(f"Successfully set RGB profile to {profile_name} after reconnection")
+                except Exception as e:
+                    print(f"Error setting RGB profile after reconnection: {str(e)}")
 
     def set_mic_color(self, color):
         if not self.device:
