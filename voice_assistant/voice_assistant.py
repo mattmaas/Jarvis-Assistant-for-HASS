@@ -46,12 +46,13 @@ class VoiceAssistant:
             self.rgb_control.set_profile("ice")  # Load 'ice' profile
             threading.Thread(target=self._run).start()
             threading.Thread(target=self._keep_alive).start()  # Start keep-alive thread
+        else:
+            self.rgb_control.set_profile("ice")  # Ensure 'ice' profile is set when restarting
 
     def stop(self):
         self.is_running = False
         self._disconnect_from_home_assistant()
         self.rgb_control.set_mic_color((255, 165, 0))  # Set to orange color
-        self.rgb_control.close()
 
     def _run(self):
         try:
