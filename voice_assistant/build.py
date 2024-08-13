@@ -62,7 +62,7 @@ def build_executable():
             '--noconfirm',
             '--noupx',
             '--strip',
-        ])
+            ])
             print("Executable built successfully.")
         except Exception as e:
             print(f"Error building executable: {e}")
@@ -70,6 +70,12 @@ def build_executable():
             import traceback
             traceback.print_exc()
             sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        print("Full traceback:")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     build_executable()
