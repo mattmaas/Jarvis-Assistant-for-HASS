@@ -38,10 +38,19 @@ class JarvisAssistant:
         self.rgb_control = OpenRGBControl()
 
     def _load_wake_words(self):
-        with open('wakewords.json', 'r') as f:
-            wake_words = json.load(f)
-        self.pipeline_keywords = {pipeline['name']: pipeline.get('keywords', []) for pipeline in wake_words}
-        return {word['name']: {"id": word.get('id', word['name']), "name": word['name']} for word in wake_words}
+        try:
+            with open('wakewords.json', 'r') as f:
+                wake_words = json.load(f)
+            if not isinstance(wake_words, dict):
+                raise ValueError("Loaded JSON is not a dictionary")
+            self.pipeline_keywords = {name: data.get('keywords', []) for name, data in wake_words.items()}
+            return {name: {"id": data.get('id', name), "name": name} for name, data in wake_words.items()}
+        except json.JSONDecodeError as e:
+            self._debug_print(f"Error decoding JSON: {e}")
+            return {}
+        except Exception as e:
+            self._debug_print(f"Error loading wake words: {e}")
+            return {}
 
     def start(self):
         if not self.is_running:
