@@ -23,10 +23,17 @@ def build_executable():
         openblas_dll = os.path.join(conda_path, 'Library', 'bin', 'libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll')
         tbb_dll = os.path.join(conda_path, 'Library', 'bin', 'tbb12.dll')
 
+        dll_args = []
+        for dll in [openblas_dll, tbb_dll]:
+            if os.path.exists(dll):
+                dll_args.append(f'--add-data={dll};.')
+            else:
+                print(f"Warning: {dll} not found. This may cause issues.")
+
         # Run PyInstaller
-        PyInstaller.__main__.run([
-            f'--add-data={openblas_dll};.',
-            f'--add-data={tbb_dll};.',
+        try:
+            PyInstaller.__main__.run([
+            *dll_args,
             main_script,
             '--name=JarvisAssistant',
             '--onefile',
@@ -56,10 +63,13 @@ def build_executable():
             '--noupx',
             '--strip',
         ])
-        print("Executable built successfully.")
-    except Exception as e:
-        print(f"Error building executable: {e}")
-        sys.exit(1)
+            print("Executable built successfully.")
+        except Exception as e:
+            print(f"Error building executable: {e}")
+            print("Full traceback:")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
 
 if __name__ == "__main__":
     build_executable()
