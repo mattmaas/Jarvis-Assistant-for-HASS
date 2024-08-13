@@ -254,6 +254,12 @@ class VoiceAssistant:
                         full_tts_url = f"{self.ha_url}{tts_url}"
                         self._play_audio_on_kitchen_speaker(full_tts_url)
                         break
+                                     # Handle incoming commands from Home Assistant
+                    if response_type == "event" and response.get("event", {}).get("type") == "voice_assistant_command":
+                        command_data = response.get("event", {}).get("data", {})
+                        command = command_data.get("command")
+                        args = command_data.get("args")
+                        self.handle_home_assistant_command(command, args)
 
             except websocket.WebSocketException as e:
                 self._debug_print(f"WebSocket error: {str(e)}")
@@ -427,3 +433,26 @@ class VoiceAssistant:
         print(formatted_message)
         debug_signals.debug_signal.emit(formatted_message)
 
+    def type_string(self, text):
+        """
+        Types the given string using pyautogui.
+        This method can be called from Home Assistant.
+        """
+        self._debug_print(f"Typing string: {text}")
+        try:
+            pyautogui.typewrite(text)
+            self._debug_print("String typed successfully")
+        except Exception as e:
+            self._debug_print(f"Error typing string: {str(e)}")
+
+    def handle_home_assistant_command(self, command, args):
+        """
+        Handles commands received from Home Assistant.
+        """
+        if command == "type_string":
+            if args and isinstance(args, str):
+                self.type_string(args)
+            else:
+                self._debug_print("Invalid arguments for type_string command")
+        else:
+            self._debug_print(f"Unknown command: {command}")
