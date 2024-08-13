@@ -39,7 +39,6 @@ def build_executable():
             '--noconfirm',
             '--noupx',
             '--strip',
-            f'-j {multiprocessing.cpu_count()}',
         ])
         print("Executable built successfully.")
     except Exception as e:
