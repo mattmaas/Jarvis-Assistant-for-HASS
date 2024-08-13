@@ -257,7 +257,19 @@ class JarvisAssistant:
                         response = json.loads(response_raw)
                         self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
                         
-                        # Process the response...
+                        if response.get("id") != current_message_id:
+                            self._debug_print(f"Received response for a different message ID: {response.get('id')}")
+                            continue
+
+                        if response.get("type") == "result":
+                            if not response.get("success"):
+                                error = response.get("error", {})
+                                error_message = error.get("message", "Unknown error")
+                                self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
+                                break
+                            final_result_received = True
+
+                        # Process other response types...
                         # (The rest of the while loop content remains the same)
 
                     if tts_url and tts_end_received and final_result_received:
@@ -266,21 +278,21 @@ class JarvisAssistant:
                             self._process_events(current_message_id, events)
                         full_tts_url = f"{self.ha_url}{tts_url}"
                         self._play_audio_on_kitchen_speaker(full_tts_url)
-                        break
+                        return  # Successfully processed the command
 
                 except websocket.WebSocketException as e:
                     self._debug_print(f"WebSocket error: {str(e)}")
-                    self._reconnect_to_home_assistant()
                 except json.JSONDecodeError:
                     self._debug_print("Received invalid JSON response from Home Assistant")
                 except Exception as e:
                     self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
-                    self._reconnect_to_home_assistant()
 
-                if attempt == max_retries - 1:
-                    self._debug_print("Failed to send command after all retry attempts")
-                tts_end_received = False
-                final_result_received = False
+            self._reconnect_to_home_assistant()
+            if attempt < max_retries - 1:
+                self._debug_print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                self._debug_print("Failed to send command after all retry attempts")
                 
                 while True:
                     if time.time() - start_time > timeout:
