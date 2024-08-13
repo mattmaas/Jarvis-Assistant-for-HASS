@@ -16,24 +16,15 @@ class OpenRGBControl:
             print(f"Error initializing RGB control: {str(e)}")
 
     def set_profile(self, profile_name):
-        if not self.device:
-            print("RGB device not initialized")
+        if not self.client:
+            print("RGB client not initialized")
             return
 
-        profile_map = {
-            "ice": RGBColor(173, 216, 230),  # Light blue
-            "red": RGBColor(255, 0, 0),
-        }
-
-        color = profile_map.get(profile_name.lower())
-        if color:
-            try:
-                self.device.set_color(color)
-                print(f"Set RGB profile to {profile_name}")
-            except Exception as e:
-                print(f"Error setting RGB profile: {str(e)}")
-        else:
-            print(f"Unknown profile: {profile_name}")
+        try:
+            self.client.load_profile(profile_name)
+            print(f"Set RGB profile to {profile_name}")
+        except Exception as e:
+            print(f"Error setting RGB profile: {str(e)}")
 
     def set_mic_color(self, color):
         if not self.device:
