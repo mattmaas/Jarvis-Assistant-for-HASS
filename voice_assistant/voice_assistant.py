@@ -27,7 +27,7 @@ class VoiceAssistant:
         self.stt_provider = self.config['STT']['PROVIDER']
         self.ha_url = self.config['HOME_ASSISTANT']['URL']
         self.ha_token = self.config['HOME_ASSISTANT']['ACCESS_TOKEN']
-        self.ha_pipeline = None
+        self.ha_pipeline = "jarvis_en"  # Set default pipeline
         self.ws = None
         self.message_id = 0  # Initialize message ID counter
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
@@ -158,10 +158,7 @@ class VoiceAssistant:
 
     def _execute_command(self, command):
         self._debug_print(f"Executing command: {command}")
-        if self.ha_pipeline:
-            self._send_to_home_assistant(command)
-        else:
-            self._debug_print("No Home Assistant pipeline selected.")
+        self._send_to_home_assistant(command)
 
     def _send_to_home_assistant(self, command):
         with self.ws_lock:
