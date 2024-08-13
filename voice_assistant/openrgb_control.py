@@ -9,19 +9,27 @@ class OpenRGBControl:
         self.connected = False
 
     def connect(self):
-        try:
-            self.client = OpenRGBClient()
-            devices = self.client.get_devices_by_type(DeviceType.MICROPHONE)
-            if devices:
-                self.mic = devices[0]
-                self.connected = True
-                print("Connected to HyperX Quadcast S microphone")
-            else:
-                print("HyperX Quadcast S microphone not found")
-                self.connected = False
-        except Exception as e:
-            print(f"Failed to connect to HyperX Quadcast S microphone: {e}")
-            self.connected = False
+        max_retries = 3
+        retry_delay = 2
+        for attempt in range(max_retries):
+            try:
+                self.client = OpenRGBClient(timeout=10)  # Increase timeout to 10 seconds
+                devices = self.client.get_devices_by_type(DeviceType.MICROPHONE)
+                if devices:
+                    self.mic = devices[0]
+                    self.connected = True
+                    print("Connected to HyperX Quadcast S microphone")
+                    return
+                else:
+                    print("HyperX Quadcast S microphone not found")
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed to connect to HyperX Quadcast S microphone: {e}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    print("Max retries reached. Failed to connect to HyperX Quadcast S microphone.")
+        self.connected = False
 
     def set_profile(self, profile_name):
         if profile_name == "ice":
