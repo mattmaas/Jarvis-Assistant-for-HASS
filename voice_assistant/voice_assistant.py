@@ -204,6 +204,13 @@ class JarvisAssistant:
                 return data['id']
         return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
 
+    def _handle_home_assistant_error(self, error_message: str, current_message_id: int):
+        self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
+        if "Pipeline not found" in error_message:
+            self._debug_print("Invalid pipeline ID. Falling back to default pipeline.")
+            return self.wake_words['jarvis']['id']
+        return None
+
     def _execute_command(self, command: str):
         self._debug_print(f"Executing command: {command}")
         pipeline_id = self._select_pipeline(command)
@@ -265,7 +272,10 @@ class JarvisAssistant:
                             if not response.get("success"):
                                 error = response.get("error", {})
                                 error_message = error.get("message", "Unknown error")
-                                self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
+                                new_pipeline_id = self._handle_home_assistant_error(error_message, current_message_id)
+                                if new_pipeline_id:
+                                    self._debug_print(f"Retrying with new pipeline ID: {new_pipeline_id}")
+                                    return self._send_to_home_assistant(command, new_pipeline_id)
                                 break
                             final_result_received = True
 
