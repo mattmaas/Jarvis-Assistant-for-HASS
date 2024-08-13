@@ -10,6 +10,7 @@ import websocket
 import json
 import time
 import requests
+import pyautogui
 from debug_window import debug_signals
 from datetime import datetime
 from openrgb_control import OpenRGBControl
