@@ -69,7 +69,7 @@ class JarvisAssistant:
     def stop(self):
         self.is_running = False
         self._disconnect_from_home_assistant()
-        self.rgb_control.set_mic_color((255, 165, 0))  # Set to orange color
+        self.rgb_control.set_mic_color((255, 69, 0))  # Set to a more vibrant orange color (Red-Orange)
 
     def _run(self):
         try:
