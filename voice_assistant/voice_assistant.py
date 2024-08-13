@@ -292,12 +292,13 @@ class JarvisAssistant:
 
             except websocket.WebSocketException as e:
                 self._debug_print(f"WebSocket error: {str(e)}")
+                self._reconnect_to_home_assistant()
             except json.JSONDecodeError:
                 self._debug_print("Received invalid JSON response from Home Assistant")
             except Exception as e:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
+                self._reconnect_to_home_assistant()
 
-            self._reconnect_to_home_assistant()
             if attempt < max_retries - 1:
                 self._debug_print(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
