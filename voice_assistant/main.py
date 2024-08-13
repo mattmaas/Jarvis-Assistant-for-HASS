@@ -115,9 +115,9 @@ def main():
     
     # Connect menu actions
     start_action.triggered.connect(assistant.start)
-    stop_action.triggered.connect(lambda: (assistant.stop(), assistant.rgb_control.set_profile("lava")))  # Load 'lava' profile when stopped
+    stop_action.triggered.connect(assistant.stop)  # The orange color is now set in the stop() method
     debug_action.triggered.connect(debug_window.show)
-    exit_action.triggered.connect(app.quit)
+    exit_action.triggered.connect(lambda: (assistant.rgb_control.set_profile("lava"), app.quit()))
     
     tray.setContextMenu(menu)
     tray.show()

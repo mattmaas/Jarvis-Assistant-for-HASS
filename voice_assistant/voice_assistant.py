@@ -43,14 +43,14 @@ class VoiceAssistant:
         if not self.is_running:
             self.is_running = True
             self._connect_to_home_assistant()  # Connect to Home Assistant when starting
-            self.rgb_control.set_profile("ice")  # Load 'ice' profile
+            self.rgb_control.set_mic_color((173, 216, 230))  # Set to ice blue color
             threading.Thread(target=self._run).start()
             threading.Thread(target=self._keep_alive).start()  # Start keep-alive thread
 
     def stop(self):
         self.is_running = False
         self._disconnect_from_home_assistant()
-        self.rgb_control.set_profile("lava")  # Load 'lava' profile
+        self.rgb_control.set_mic_color((255, 165, 0))  # Set to orange color
         self.rgb_control.close()
 
     def _run(self):
@@ -75,7 +75,7 @@ class VoiceAssistant:
                     self._play_chime()
                     self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
                     self._process_speech()
-                    self.rgb_control.set_profile("ice")  # Load 'ice' profile after processing
+                    self.rgb_control.set_mic_color((173, 216, 230))  # Set back to ice blue color after processing
 
         finally:
             if self.audio_stream:
