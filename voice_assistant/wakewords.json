@@ -1,26 +1,22 @@
 {
   "jarvis": {
-    "id": "jarvis",
+    "id": "01j51cps9cfghkdyd0vatrdf8x",
     "name": "Jarvis"
   },
-  "alexa": {
-    "id": "alexa",
-    "name": "Alexa"
-  },
-  "computer": {
-    "id": "computer",
-    "name": "Computer"
-  },
   "bumblebee": {
-    "id": "bumblebee",
-    "name": "Bumblebee"
-  },
-  "grasshopper": {
-    "id": "grasshopper",
-    "name": "Grasshopper"
+    "id": "01j1kh900aqb7n37tpj8r6n7m8",
+    "name": "Arthur"
   },
   "porcupine": {
-    "id": "porcupine",
-    "name": "Porcupine"
+    "id": "01j50ghswc241weadn0csavaxn",
+    "name": "Vader"
+  },
+  "computer": {
+    "id": "01j50gmjd83jbagext5ngzxc8d",
+    "name": "Professor"
+  },
+  "grasshopper": {
+    "id": "01j50gqrmxvtay9wzw0tbx0mrm",
+    "name": "Jimmy"
   }
 }
