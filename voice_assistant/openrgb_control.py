@@ -19,11 +19,11 @@ class OpenRGBControl:
             else:
                 print("No microphone device found in OpenRGB")
                 self.connected = False
-        except openrgb.OpenRGBClientError as e:
-            print(f"Failed to connect to OpenRGB: {e}")
-            self.connected = False
         except Exception as e:
-            print(f"Unexpected error connecting to OpenRGB: {e}")
+            if "Failed to connect" in str(e):
+                print(f"Failed to connect to OpenRGB: {e}")
+            else:
+                print(f"Unexpected error connecting to OpenRGB: {e}")
             self.connected = False
 
     def set_profile(self, profile_name):
