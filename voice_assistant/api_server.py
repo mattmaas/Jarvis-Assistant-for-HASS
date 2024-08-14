@@ -3,9 +3,14 @@ import os
 import subprocess
 import json
 import threading
+import logging
 
 app = Flask(__name__)
 assistant = None
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def init_assistant(assistant_instance):
     global assistant
@@ -85,12 +90,16 @@ def save_nicknames(nicknames):
 
 @app.route('/api/start_listening', methods=['POST'])
 def start_listening():
+    logger.debug("Received start_listening request")
     assistant.start()
+    logger.debug("Started listening")
     return jsonify({"status": "success", "message": "Started listening"}), 200
 
 @app.route('/api/stop_listening', methods=['POST'])
 def stop_listening():
+    logger.debug("Received stop_listening request")
     assistant.stop()
+    logger.debug("Stopped listening")
     return jsonify({"status": "success", "message": "Stopped listening"}), 200
 
 if __name__ == '__main__':
