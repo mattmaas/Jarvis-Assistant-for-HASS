@@ -200,8 +200,6 @@ class JarvisAssistant:
         if self.ha_pipeline == "auto":
             words = text.lower().split()
             for pipeline_name, data in self.wake_words.items():
-                if pipeline_name == "auto":
-                    continue  # Skip the "auto" entry
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
                 if any(keyword in words for keyword in keywords):
                     return data['id']

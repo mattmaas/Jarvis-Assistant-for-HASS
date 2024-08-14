@@ -42,10 +42,13 @@ def main():
     pipeline_group.setExclusive(True)
     
     # Create the "Auto" option
-    auto_action = QAction("Auto", ha_menu, checkable=True)
-    auto_action.triggered.connect(lambda: set_ha_pipeline("auto_pipeline"))
+    auto_action = QAction("Auto (Interpreter)", ha_menu, checkable=True)
+    auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
     pipeline_group.addAction(auto_action)
     ha_menu.addAction(auto_action)
+    
+    # Add a separator
+    ha_menu.addSeparator()
     
     menu.addMenu(ha_menu)
 
@@ -54,9 +57,12 @@ def main():
         ha_menu.clear()
         pipeline_group.setExclusive(False)  # Temporarily disable exclusivity
         
-        # Re-add the "Auto" option
+        # Always add the "Auto" option first
         ha_menu.addAction(auto_action)
-        auto_action.setChecked(assistant.ha_pipeline == "auto_pipeline")
+        auto_action.setChecked(assistant.ha_pipeline == "auto")
+        
+        # Add a separator
+        ha_menu.addSeparator()
         
         pipeline_group.setExclusive(True)  # Re-enable exclusivity
 
