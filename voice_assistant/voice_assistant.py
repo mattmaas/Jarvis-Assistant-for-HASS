@@ -337,14 +337,34 @@ class JarvisAssistant:
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
         try:
-            # Construct the service call to play audio on the kitchen speaker
+            # Play a short silence before the actual audio
+            self.message_id += 1
+            silence_url = f"{self.ha_url}/local/silence.mp3"  # Make sure to add a short silence.mp3 file to your /www folder in Home Assistant
+            silence_call = {
+                "type": "call_service",
+                "domain": "media_player",
+                "service": "play_media",
+                "service_data": {
+                    "entity_id": "media_player.kitchen_display",
+                    "media_content_id": silence_url,
+                    "media_content_type": "music"
+                },
+                "id": self.message_id
+            }
+            self._debug_print(f"Sending play silence command: {json.dumps(silence_call)}")
+            self.ws.send(json.dumps(silence_call))
+
+            # Wait for a short moment
+            time.sleep(0.5)
+
+            # Now play the actual audio
             self.message_id += 1
             service_call = {
                 "type": "call_service",
                 "domain": "media_player",
                 "service": "play_media",
                 "service_data": {
-                    "entity_id": "media_player.kitchen_display",  # Updated kitchen speaker entity ID
+                    "entity_id": "media_player.kitchen_display",
                     "media_content_id": tts_url,
                     "media_content_type": "music"
                 },
