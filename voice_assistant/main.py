@@ -8,6 +8,7 @@ from voice_assistant import JarvisAssistant
 from debug_window import DebugWindow, debug_signals
 import os
 import winreg
+import time
 
 # Get the directory of the current script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -156,6 +157,7 @@ def main():
     update_pipelines_action = ha_menu.addAction("Update Pipelines")
     update_pipelines_action.triggered.connect(update_ha_pipelines)
     
+    restart_action = menu.addAction("Restart")
     exit_action = menu.addAction("Exit")
     
     # Function to enable/disable startup
@@ -196,6 +198,15 @@ def main():
     start_action.triggered.connect(assistant.start)
     stop_action.triggered.connect(assistant.stop)  # The orange color is now set in the stop() method
     debug_action.triggered.connect(debug_window.show)
+    def restart_assistant():
+        debug_signals.debug_signal.emit("Restarting assistant...")
+        assistant.stop()
+        time.sleep(1)  # Give some time for the assistant to stop
+        assistant.__init__(CONFIG_PATH, sensitivity=0.7)
+        assistant.start()
+        debug_signals.debug_signal.emit("Assistant restarted")
+
+    restart_action.triggered.connect(restart_assistant)
     exit_action.triggered.connect(lambda: (assistant.rgb_control.set_profile("lava"), app.quit()))
     enable_startup_action.triggered.connect(lambda: toggle_startup(True))
     disable_startup_action.triggered.connect(lambda: toggle_startup(False))
