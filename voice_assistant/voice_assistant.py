@@ -354,10 +354,7 @@ class JarvisAssistant:
             self._debug_print(f"Sending play silence command: {json.dumps(silence_call)}")
             self.ws.send(json.dumps(silence_call))
 
-            # Wait for a short moment
-            time.sleep(0.5)
-
-            # Now play the actual audio
+            # Play the actual audio immediately after silence
             self.message_id += 1
             service_call = {
                 "type": "call_service",
