@@ -53,6 +53,7 @@ def main():
     # Function to update Home Assistant pipelines
     def update_ha_pipelines():
         ha_menu.clear()
+        pipeline_group.setExclusive(False)  # Temporarily disable exclusivity
         
         # Re-add the "Auto" option
         auto_action = QAction("Auto", ha_menu, checkable=True)
@@ -60,6 +61,8 @@ def main():
         pipeline_group.addAction(auto_action)
         ha_menu.addAction(auto_action)
         auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
+        
+        pipeline_group.setExclusive(True)  # Re-enable exclusivity
 
     # Create a submenu for startup options
     startup_menu = menu.addMenu("Startup Options")
