@@ -1,27 +1,32 @@
 {
+  "auto": {
+    "id": "01j51cps9cfghkdyd0vatrdf8x",
+    "name": "Auto",
+    "keywords": [ "auto", "otto" ]
+  },
   "jarvis": {
     "id": "01j51cps9cfghkdyd0vatrdf8x",
     "name": "Jarvis",
-    "keywords": ["jarvis", "assistant"]
+    "keywords": [ "jarvis", "assistant" ]
   },
   "bumblebee": {
     "id": "01j1kh900aqb7n37tpj8r6n7m8",
     "name": "Arthur",
-    "keywords": ["arthur", "bumblebee"]
+    "keywords": [ "arthur", "bumblebee" ]
   },
   "porcupine": {
     "id": "01j50ghswc241weadn0csavaxn",
     "name": "Vader",
-    "keywords": ["vader", "dark side"]
+    "keywords": [ "vader", "dark lord", "lord", "darth", "dark vader" ]
   },
   "computer": {
     "id": "01j50gmjd83jbagext5ngzxc8d",
     "name": "Professor",
-    "keywords": ["professor", "teacher", "expert"]
+    "keywords": [ "professor", "teacher", "expert", "mister" ]
   },
   "grasshopper": {
     "id": "01j50gqrmxvtay9wzw0tbx0mrm",
     "name": "Jimmy",
-    "keywords": ["jimmy", "grasshopper"]
+    "keywords": [ "jimmy", "grasshopper" ]
   }
 }
