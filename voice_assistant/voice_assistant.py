@@ -15,8 +15,6 @@ from debug_window import debug_signals
 from datetime import datetime
 from openrgb_control import OpenRGBControl
 from typing import Dict, List
-from api_server import run_flask_server
-
 class JarvisAssistant:
     def __init__(self, config_path, sensitivity=0.5):
         self.config = configparser.ConfigParser()
@@ -38,7 +36,9 @@ class JarvisAssistant:
         self.wake_words = self._load_wake_words()
         self.rgb_control = OpenRGBControl()
         
-        # Start the Flask server in a separate thread
+        # Import and start the Flask server in a separate thread
+        from api_server import run_flask_server, init_assistant
+        init_assistant(self)
         self.flask_thread = threading.Thread(target=run_flask_server, daemon=True)
         self.flask_thread.start()
 
