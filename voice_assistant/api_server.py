@@ -40,8 +40,8 @@ def launch_file():
     except Exception as e:
         return jsonify({"error": f"Error launching file: {str(e)}"}), 500
 
-@app.route('/api/add_nickname', methods=['POST'])
-def add_nickname():
+@app.route('/api/add_file_nickname', methods=['POST'])
+def add_file_nickname():
     data = request.json
     nickname = data.get('nickname')
     filename = data.get('filename')
