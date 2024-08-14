@@ -50,6 +50,17 @@ def main():
     
     menu.addMenu(ha_menu)
 
+    # Function to update Home Assistant pipelines
+    def update_ha_pipelines():
+        ha_menu.clear()
+        
+        # Re-add the "Auto" option
+        auto_action = QAction("Auto", ha_menu, checkable=True)
+        auto_action.setChecked(assistant.ha_pipeline == "auto")
+        pipeline_group.addAction(auto_action)
+        ha_menu.addAction(auto_action)
+        auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
+
     # Create a submenu for startup options
     startup_menu = menu.addMenu("Startup Options")
     enable_startup_action = startup_menu.addAction("Enable on Startup")
@@ -121,16 +132,16 @@ def main():
     
     # Function to set the selected Home Assistant pipeline
     def set_ha_pipeline(pipeline_id):
+        assistant.ha_pipeline = pipeline_id
+        for action in pipeline_group.actions():
+            if (action.text() == "Auto" and pipeline_id == "auto") or (action.data() == pipeline_id):
+                action.setChecked(True)
+            else:
+                action.setChecked(False)
+        
         if pipeline_id == "auto":
-            assistant.ha_pipeline = "auto"
-            auto_action.setChecked(True)
             debug_signals.debug_signal.emit("Auto pipeline selection enabled")
         elif pipeline_id:
-            assistant.ha_pipeline = pipeline_id
-            for action in pipeline_group.actions():
-                if action.text() != "Auto" and action.data() == pipeline_id:
-                    action.setChecked(True)
-                    break
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
         else:
             debug_signals.debug_signal.emit("No pipeline selected")
