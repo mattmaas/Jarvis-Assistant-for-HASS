@@ -2,7 +2,7 @@ import sys
 import threading
 import websocket
 import json
-from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
+from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QActionGroup
 from PyQt5.QtGui import QIcon
 from voice_assistant import JarvisAssistant
 from debug_window import DebugWindow, debug_signals
