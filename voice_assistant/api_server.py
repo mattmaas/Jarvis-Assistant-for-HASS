@@ -4,8 +4,60 @@ from voice_assistant import JarvisAssistant
 app = Flask(__name__)
 assistant = JarvisAssistant('config.ini')
 
+import os
+import subprocess
+import json
+
 @app.route('/api/type_string', methods=['POST'])
 def type_string():
+
+@app.route('/api/launch_file', methods=['POST'])
+def launch_file():
+    data = request.json
+    filename = data.get('filename')
+    if not filename:
+        return jsonify({"error": "No filename provided"}), 400
+
+    # Check if the filename is a nickname
+    nicknames = load_nicknames()
+    if filename in nicknames:
+        filename = nicknames[filename]
+
+    # If it's not a full path, assume it's relative to the current directory
+    if not os.path.isabs(filename):
+        filename = os.path.join(os.path.dirname(__file__), filename)
+
+    try:
+        subprocess.Popen(filename, shell=True)
+        return jsonify({"message": f"File {filename} launched successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error launching file: {str(e)}"}), 500
+
+@app.route('/api/add_nickname', methods=['POST'])
+def add_nickname():
+    data = request.json
+    nickname = data.get('nickname')
+    filename = data.get('filename')
+    if not nickname or not filename:
+        return jsonify({"error": "Both nickname and filename are required"}), 400
+
+    nicknames = load_nicknames()
+    nicknames[nickname] = filename
+    save_nicknames(nicknames)
+
+    return jsonify({"message": f"Nickname '{nickname}' added for file '{filename}'"}), 200
+
+def load_nicknames():
+    nickname_file = os.path.join(os.path.dirname(__file__), 'file_nicknames.json')
+    if os.path.exists(nickname_file):
+        with open(nickname_file, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_nicknames(nicknames):
+    nickname_file = os.path.join(os.path.dirname(__file__), 'file_nicknames.json')
+    with open(nickname_file, 'w') as f:
+        json.dump(nicknames, f, indent=2)
     data = request.json
     text = data.get('text')
     if text:
