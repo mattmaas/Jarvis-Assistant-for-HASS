@@ -508,7 +508,7 @@ class JarvisAssistant:
             self._debug_print("Waiting for 5 seconds before typing...")
             time.sleep(5)
             self._debug_print(f"Typing string: {text}")
-            pyautogui.typewrite(text)
+            pyautogui.write(text, interval=0.05)  # Add a small delay between characters
             self._debug_print("String typed successfully")
         except Exception as e:
             self._debug_print(f"Error typing string: {str(e)}")
