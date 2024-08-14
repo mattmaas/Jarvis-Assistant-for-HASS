@@ -37,7 +37,17 @@ def main():
     debug_action = menu.addAction("Show Debug Window")
     
     # Create a submenu for Home Assistant pipelines
-    ha_menu = menu.addMenu("Home Assistant Pipelines")
+    ha_menu = QMenu("Home Assistant Pipelines")
+    pipeline_group = QActionGroup(ha_menu)
+    pipeline_group.setExclusive(True)
+    
+    # Add "Auto" option
+    auto_action = QAction("Auto", ha_menu, checkable=True)
+    auto_action.setChecked(True)  # Set "Auto" as default
+    pipeline_group.addAction(auto_action)
+    ha_menu.addAction(auto_action)
+    
+    menu.addMenu(ha_menu)
 
     # Create a submenu for startup options
     startup_menu = menu.addMenu("Startup Options")
@@ -89,15 +99,14 @@ def main():
                     for pipeline in pipelines:
                         pipeline_name = pipeline.get('name', 'Unknown')
                         pipeline_id = pipeline.get('id')
-                        action = QAction(pipeline_name, ha_menu)
+                        action = QAction(pipeline_name, ha_menu, checkable=True)
                         action.triggered.connect(lambda checked, p=pipeline_id: set_ha_pipeline(p))
+                        pipeline_group.addAction(action)
                         ha_menu.addAction(action)
                     
-                    # Set default pipeline
-                    if pipelines:
-                        default_pipeline = next((p for p in pipelines if p.get('name', '').lower() == 'jarvis'), pipelines[0])
-                        set_ha_pipeline(default_pipeline.get('id'))
-                        debug_signals.debug_signal.emit(f"Set default pipeline: {default_pipeline.get('name')}")
+                    # Set default pipeline to "Auto"
+                    set_ha_pipeline("auto")
+                    debug_signals.debug_signal.emit("Set default pipeline: Auto")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
             else:
@@ -109,7 +118,10 @@ def main():
     
     # Function to set the selected Home Assistant pipeline
     def set_ha_pipeline(pipeline_id):
-        if pipeline_id:
+        if pipeline_id == "auto":
+            assistant.ha_pipeline = "auto"
+            debug_signals.debug_signal.emit("Auto pipeline selection enabled")
+        elif pipeline_id:
             assistant.ha_pipeline = pipeline_id
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
         else:

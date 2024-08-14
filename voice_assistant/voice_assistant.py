@@ -197,12 +197,15 @@ class JarvisAssistant:
             self._debug_print(f"An error occurred: {e}")
 
     def _select_pipeline(self, text: str) -> str:
-        words = text.lower().split()
-        for pipeline_name, data in self.wake_words.items():
-            keywords = self.pipeline_keywords.get(pipeline_name, [])
-            if any(keyword in words for keyword in keywords):
-                return data['id']
-        return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
+        if self.ha_pipeline == "auto":
+            words = text.lower().split()
+            for pipeline_name, data in self.wake_words.items():
+                keywords = self.pipeline_keywords.get(pipeline_name, [])
+                if any(keyword in words for keyword in keywords):
+                    return data['id']
+            return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
+        else:
+            return self.ha_pipeline  # Return the manually selected pipeline ID
 
     def _handle_home_assistant_error(self, error_message: str, current_message_id: int):
         self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
