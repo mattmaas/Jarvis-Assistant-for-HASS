@@ -46,6 +46,7 @@ def main():
     auto_action.setChecked(True)  # Set "Auto" as default
     pipeline_group.addAction(auto_action)
     ha_menu.addAction(auto_action)
+    auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
     
     menu.addMenu(ha_menu)
 
@@ -100,12 +101,14 @@ def main():
                         pipeline_name = pipeline.get('name', 'Unknown')
                         pipeline_id = pipeline.get('id')
                         action = QAction(pipeline_name, ha_menu, checkable=True)
+                        action.setData(pipeline_id)
                         action.triggered.connect(lambda checked, p=pipeline_id: set_ha_pipeline(p))
                         pipeline_group.addAction(action)
                         ha_menu.addAction(action)
                     
                     # Set default pipeline to "Auto"
                     set_ha_pipeline("auto")
+                    auto_action.setChecked(True)
                     debug_signals.debug_signal.emit("Set default pipeline: Auto")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
@@ -120,9 +123,14 @@ def main():
     def set_ha_pipeline(pipeline_id):
         if pipeline_id == "auto":
             assistant.ha_pipeline = "auto"
+            auto_action.setChecked(True)
             debug_signals.debug_signal.emit("Auto pipeline selection enabled")
         elif pipeline_id:
             assistant.ha_pipeline = pipeline_id
+            for action in pipeline_group.actions():
+                if action.text() != "Auto" and action.data() == pipeline_id:
+                    action.setChecked(True)
+                    break
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
         else:
             debug_signals.debug_signal.emit("No pipeline selected")
