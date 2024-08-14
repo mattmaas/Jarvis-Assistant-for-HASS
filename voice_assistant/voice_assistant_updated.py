@@ -259,60 +259,66 @@ class JarvisAssistant:
                             self._debug_print(f"Timeout waiting for response from Home Assistant (ID: {current_message_id})")
                             break
 
-                        response_raw = self.ws.recv()
-                        self._debug_print(f"Received raw response: {response_raw}")
-                        response = json.loads(response_raw)
-                        self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
+                        try:
+                            response_raw = self.ws.recv()
+                            self._debug_print(f"Received raw response: {response_raw}")
+                            response = json.loads(response_raw)
+                            self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
                         
-                        if response.get("id") != current_message_id:
-                            self._debug_print(f"Received response for a different message ID: {response.get('id')}")
-                            continue
+                            if response.get("id") != current_message_id:
+                                self._debug_print(f"Received response for a different message ID: {response.get('id')}")
+                                continue
 
-                        if response.get("type") == "result":
-                            if not response.get("success"):
-                                error = response.get("error", {})
-                                error_message = error.get("message", "Unknown error")
-                                new_pipeline_id = self._handle_home_assistant_error(error_message, current_message_id)
-                                if new_pipeline_id:
-                                    self._debug_print(f"Retrying with new pipeline ID: {new_pipeline_id}")
-                                    return self._send_to_home_assistant(command, new_pipeline_id)
-                                break
-                            final_result_received = True
+                            if response.get("type") == "result":
+                                if not response.get("success"):
+                                    error = response.get("error", {})
+                                    error_message = error.get("message", "Unknown error")
+                                    new_pipeline_id = self._handle_home_assistant_error(error_message, current_message_id)
+                                    if new_pipeline_id:
+                                        self._debug_print(f"Retrying with new pipeline ID: {new_pipeline_id}")
+                                        return self._send_to_home_assistant(command, new_pipeline_id)
+                                    break
+                                final_result_received = True
 
-                        elif response.get("type") == "event":
-                            events.append(response)
-                            event_data = response.get("event", {}).get("data", {})
-                            event_type = response.get("event", {}).get("type")
-                            
-                            if event_type == "tts-end":
-                                tts_output = event_data.get("tts_output", {})
-                                tts_url = tts_output.get("url")
-                                if tts_url:
-                                    self._debug_print(f"Found TTS URL: {tts_url}")
-                                tts_end_received = True
-                            
-                            elif event_type == "voice_assistant_command":
-                                command_data = event_data
-                                command = command_data.get("command")
-                                args = command_data.get("args")
-                                self.handle_home_assistant_command(command, args)
+                            elif response.get("type") == "event":
+                                events.append(response)
+                                event_data = response.get("event", {}).get("data", {})
+                                event_type = response.get("event", {}).get("type")
+                                
+                                if event_type == "tts-end":
+                                    tts_output = event_data.get("tts_output", {})
+                                    tts_url = tts_output.get("url")
+                                    if tts_url:
+                                        self._debug_print(f"Found TTS URL: {tts_url}")
+                                    tts_end_received = True
+                                
+                                elif event_type == "voice_assistant_command":
+                                    command_data = event_data
+                                    command = command_data.get("command")
+                                    args = command_data.get("args")
+                                    self.handle_home_assistant_command(command, args)
 
-                        if tts_url and tts_end_received and final_result_received:
-                            self._debug_print("Received TTS URL, TTS end event, and final result. Processing complete.")
-                            if events:
-                                self._process_events(current_message_id, events)
-                            full_tts_url = f"{self.ha_url}{tts_url}"
-                            self._play_audio_on_kitchen_speaker(full_tts_url)
-                            return  # Successfully processed the command
+                            if tts_url and tts_end_received and final_result_received:
+                                self._debug_print("Received TTS URL, TTS end event, and final result. Processing complete.")
+                                if events:
+                                    self._process_events(current_message_id, events)
+                                full_tts_url = f"{self.ha_url}{tts_url}"
+                                self._play_audio_on_kitchen_speaker(full_tts_url)
+                                return  # Successfully processed the command
+
+                        except websocket.WebSocketException as e:
+                            self._debug_print(f"WebSocket error while receiving: {str(e)}")
+                            break
 
             except websocket.WebSocketException as e:
                 self._debug_print(f"WebSocket error: {str(e)}")
-                self._reconnect_to_home_assistant()
             except json.JSONDecodeError:
                 self._debug_print("Received invalid JSON response from Home Assistant")
             except Exception as e:
                 self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
-                self._reconnect_to_home_assistant()
+
+            self._debug_print(f"Attempting to reconnect... (Attempt {attempt + 1}/{max_retries})")
+            self._reconnect_to_home_assistant()
 
             if attempt < max_retries - 1:
                 self._debug_print(f"Retrying in {retry_delay} seconds...")
