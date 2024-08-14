@@ -36,16 +36,16 @@ def main():
     stop_action = menu.addAction("Stop Listening")
     debug_action = menu.addAction("Show Debug Window")
     
+    # Create the "Auto" option
+    auto_action = QAction("Auto (Interpreter)", checkable=True)
+    auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
+    menu.addAction(auto_action)
+
     # Create a submenu for Home Assistant pipelines
     ha_menu = QMenu("Home Assistant Pipelines")
     pipeline_group = QActionGroup(ha_menu)
     pipeline_group.setExclusive(True)
     
-    # Create the "Auto" option
-    auto_action = QAction("Auto (Interpreter)", ha_menu, checkable=True)
-    auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
-    pipeline_group.addAction(auto_action)
-    ha_menu.addAction(auto_action)
     
     # Add a separator
     ha_menu.addSeparator()
