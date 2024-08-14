@@ -222,6 +222,9 @@ class JarvisAssistant:
 
     def _execute_command(self, command: str):
         self._debug_print(f"Executing command: {command}")
+        if "never mind" in command.lower() or "nevermind" in command.lower():
+            self._debug_print("Command contains 'never mind' or 'nevermind'. Not transmitting to assistant.")
+            return
         pipeline_id = self._select_pipeline(command)
         self._send_to_home_assistant(command, pipeline_id)
 
