@@ -41,6 +41,12 @@ def main():
     pipeline_group = QActionGroup(ha_menu)
     pipeline_group.setExclusive(True)
     
+    # Create the "Auto" option
+    auto_action = QAction("Auto", ha_menu, checkable=True)
+    auto_action.triggered.connect(lambda: set_ha_pipeline("auto_pipeline"))
+    pipeline_group.addAction(auto_action)
+    ha_menu.addAction(auto_action)
+    
     menu.addMenu(ha_menu)
 
     # Function to update Home Assistant pipelines
@@ -48,12 +54,9 @@ def main():
         ha_menu.clear()
         pipeline_group.setExclusive(False)  # Temporarily disable exclusivity
         
-        # Add the "Auto" option
-        auto_action = QAction("Auto", ha_menu, checkable=True)
-        auto_action.setChecked(assistant.ha_pipeline == "auto_pipeline")
-        pipeline_group.addAction(auto_action)
+        # Re-add the "Auto" option
         ha_menu.addAction(auto_action)
-        auto_action.triggered.connect(lambda: set_ha_pipeline("auto_pipeline"))
+        auto_action.setChecked(assistant.ha_pipeline == "auto_pipeline")
         
         pipeline_group.setExclusive(True)  # Re-enable exclusivity
 
@@ -114,8 +117,7 @@ def main():
                         ha_menu.addAction(action)
                     
                     # Set default pipeline to "Auto"
-                    set_ha_pipeline("auto")
-                    auto_action.setChecked(True)
+                    set_ha_pipeline("auto_pipeline")
                     debug_signals.debug_signal.emit("Set default pipeline: Auto")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
