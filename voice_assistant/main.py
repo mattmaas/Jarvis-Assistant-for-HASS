@@ -38,6 +38,7 @@ def main():
     
     # Create the "Auto" option
     auto_action = QAction("Auto (Interpreter)", checkable=True)
+    auto_action.setChecked(True)  # Start as checked
     auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
     menu.addAction(auto_action)
 
@@ -123,7 +124,7 @@ def main():
                         ha_menu.addAction(action)
                     
                     # Set default pipeline to "Auto"
-                    set_ha_pipeline("auto_pipeline")
+                    set_ha_pipeline("auto")
                     debug_signals.debug_signal.emit("Set default pipeline: Auto")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
@@ -137,13 +138,14 @@ def main():
     # Function to set the selected Home Assistant pipeline
     def set_ha_pipeline(pipeline_id):
         assistant.ha_pipeline = pipeline_id
+        auto_action.setChecked(pipeline_id == "auto")
         for action in pipeline_group.actions():
-            if (action.text() == "Auto" and pipeline_id == "auto_pipeline") or (action.data() == pipeline_id):
+            if action.data() == pipeline_id:
                 action.setChecked(True)
             else:
                 action.setChecked(False)
         
-        if pipeline_id == "auto_pipeline":
+        if pipeline_id == "auto":
             debug_signals.debug_signal.emit("Auto pipeline selection enabled")
         elif pipeline_id:
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
