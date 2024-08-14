@@ -15,6 +15,7 @@ from debug_window import debug_signals
 from datetime import datetime
 from openrgb_control import OpenRGBControl
 from typing import Dict, List
+from api_server import run_flask_server
 
 class JarvisAssistant:
     def __init__(self, config_path, sensitivity=0.5):
@@ -36,6 +37,10 @@ class JarvisAssistant:
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
         self.wake_words = self._load_wake_words()
         self.rgb_control = OpenRGBControl()
+        
+        # Start the Flask server in a separate thread
+        self.flask_thread = threading.Thread(target=run_flask_server, daemon=True)
+        self.flask_thread.start()
 
     def _load_wake_words(self):
         try:

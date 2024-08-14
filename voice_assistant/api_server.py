@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify
 from voice_assistant import JarvisAssistant
+import os
+import subprocess
+import json
+import threading
 
 app = Flask(__name__)
 assistant = JarvisAssistant('config.ini')
 
-import os
-import subprocess
-import json
+def run_flask_server():
+    app.run(host='0.0.0.0', port=5000, threaded=True)
 
 @app.route('/api/type_string', methods=['POST'])
 def type_string():
