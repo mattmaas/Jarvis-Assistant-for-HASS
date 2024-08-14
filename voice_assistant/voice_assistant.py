@@ -209,7 +209,7 @@ class JarvisAssistant:
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
                 if any(keyword in words for keyword in keywords):
                     return data['id']
-            return self.wake_words.get('jarvis', {'id': '01j51cps9cfghkdyd0vatrdf8x'})['id']  # Return default pipeline ID if no keywords match
+            return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
         else:
             return self.ha_pipeline  # Return the manually selected pipeline ID
 
