@@ -9,6 +9,7 @@ import configparser
 import websocket
 import json
 import time
+import time
 import requests
 import pyautogui
 from debug_window import debug_signals
@@ -499,11 +500,14 @@ class JarvisAssistant:
 
     def type_string(self, text):
         """
-        Types the given string using pyautogui.
+        Types the given string using pyautogui after a 5-second delay.
         This method can be called from Home Assistant.
         """
-        self._debug_print(f"Typing string: {text}")
+        self._debug_print(f"Preparing to type string: {text}")
         try:
+            self._debug_print("Waiting for 5 seconds before typing...")
+            time.sleep(5)
+            self._debug_print(f"Typing string: {text}")
             pyautogui.typewrite(text)
             self._debug_print("String typed successfully")
         except Exception as e:
