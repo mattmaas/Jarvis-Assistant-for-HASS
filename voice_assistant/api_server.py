@@ -29,10 +29,14 @@ def launch_file():
     nicknames = load_nicknames()
     if filename in nicknames:
         filename = nicknames[filename]
-
-    # If it's not a full path, assume it's relative to the current directory
-    if not os.path.isabs(filename):
-        filename = os.path.join(os.path.dirname(__file__), filename)
+    elif not os.path.exists(filename):
+        # If it's not a nickname and not an existing file, check if it's a relative path
+        if not os.path.isabs(filename):
+            filename = os.path.join(os.path.dirname(__file__), filename)
+        
+        # If it still doesn't exist, return an error
+        if not os.path.exists(filename):
+            return jsonify({"error": f"File or nickname '{filename}' not found"}), 404
 
     try:
         subprocess.Popen(filename, shell=True)
