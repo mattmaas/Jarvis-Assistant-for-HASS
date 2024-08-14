@@ -41,13 +41,6 @@ def main():
     pipeline_group = QActionGroup(ha_menu)
     pipeline_group.setExclusive(True)
     
-    # Add "Auto" option
-    auto_action = QAction("Auto", ha_menu, checkable=True)
-    auto_action.setChecked(True)  # Set "Auto" as default
-    pipeline_group.addAction(auto_action)
-    ha_menu.addAction(auto_action)
-    auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
-    
     menu.addMenu(ha_menu)
 
     # Function to update Home Assistant pipelines
@@ -55,12 +48,12 @@ def main():
         ha_menu.clear()
         pipeline_group.setExclusive(False)  # Temporarily disable exclusivity
         
-        # Re-add the "Auto" option
+        # Add the "Auto" option
         auto_action = QAction("Auto", ha_menu, checkable=True)
-        auto_action.setChecked(assistant.ha_pipeline == "auto")
+        auto_action.setChecked(assistant.ha_pipeline == "auto_pipeline")
         pipeline_group.addAction(auto_action)
         ha_menu.addAction(auto_action)
-        auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
+        auto_action.triggered.connect(lambda: set_ha_pipeline("auto_pipeline"))
         
         pipeline_group.setExclusive(True)  # Re-enable exclusivity
 
@@ -137,12 +130,12 @@ def main():
     def set_ha_pipeline(pipeline_id):
         assistant.ha_pipeline = pipeline_id
         for action in pipeline_group.actions():
-            if (action.text() == "Auto" and pipeline_id == "auto") or (action.data() == pipeline_id):
+            if (action.text() == "Auto" and pipeline_id == "auto_pipeline") or (action.data() == pipeline_id):
                 action.setChecked(True)
             else:
                 action.setChecked(False)
         
-        if pipeline_id == "auto":
+        if pipeline_id == "auto_pipeline":
             debug_signals.debug_signal.emit("Auto pipeline selection enabled")
         elif pipeline_id:
             debug_signals.debug_signal.emit(f"Selected pipeline: {pipeline_id}")
