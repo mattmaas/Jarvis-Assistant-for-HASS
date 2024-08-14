@@ -164,8 +164,8 @@ class JarvisAssistant:
                 self._debug_print("Listening for command...")
                 recognizer.dynamic_energy_threshold = True
                 recognizer.energy_threshold = 300  # Lower value for increased sensitivity
-                recognizer.pause_threshold = 0.8  # Shorter pause for faster response
-                audio = recognizer.listen(source, timeout=7, phrase_time_limit=7)
+                recognizer.pause_threshold = 1.5  # Increased pause threshold for longer pauses
+                audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
 
             try:
                 if self.stt_provider == "google":
