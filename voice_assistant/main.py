@@ -106,9 +106,10 @@ def main():
                         pipeline_group.addAction(action)
                         ha_menu.addAction(action)
                     
-                    # Set default pipeline to "Auto"
-                    set_ha_pipeline("auto")
-                    debug_signals.debug_signal.emit("Set default pipeline: Auto")
+                    # Set default pipeline to "Auto" or the preferred pipeline
+                    default_pipeline = preferred_pipeline if preferred_pipeline else "auto"
+                    set_ha_pipeline(default_pipeline)
+                    debug_signals.debug_signal.emit(f"Set default pipeline: {default_pipeline}")
                 else:
                     debug_signals.debug_signal.emit(f"Authentication failed: {auth_result}")
             else:
@@ -180,7 +181,9 @@ def main():
         debug_signals.debug_signal.emit("Restarting assistant...")
         assistant.stop()
         time.sleep(1)  # Give some time for the assistant to stop
-        assistant.__init__(CONFIG_PATH, sensitivity=0.7)
+        global assistant  # Declare assistant as global to modify it
+        assistant = JarvisAssistant(CONFIG_PATH, sensitivity=0.7)  # Create a new instance
+        update_ha_pipelines()  # Update pipelines after creating new instance
         assistant.start()
         debug_signals.debug_signal.emit("Assistant restarted")
 
