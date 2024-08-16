@@ -22,9 +22,10 @@ def build_executable():
         conda_path = os.path.dirname(sys.executable)
         openblas_dll = os.path.join(conda_path, 'Library', 'bin', 'libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll')
         tbb_dll = os.path.join(conda_path, 'Library', 'bin', 'tbb12.dll')
+        api_ms_win_crt_heap_dll = os.path.join(conda_path, 'Library', 'bin', 'api-ms-win-crt-heap-l1-1-0.dll')
 
         dll_args = []
-        for dll in [openblas_dll, tbb_dll]:
+        for dll in [openblas_dll, tbb_dll, api_ms_win_crt_heap_dll]:
             if os.path.exists(dll):
                 dll_args.append(f'--add-data={dll};.')
             else:
@@ -61,7 +62,6 @@ def build_executable():
             '--log-level=DEBUG',
             '--noconfirm',
             '--noupx',
-            '--strip',
             ])
             print("Executable built successfully.")
         except Exception as e:
