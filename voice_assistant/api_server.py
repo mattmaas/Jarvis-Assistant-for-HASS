@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 import os
 import subprocess
 import json
@@ -21,13 +21,12 @@ def run_flask_server():
 
 @app.route('/api/type_string', methods=['POST'])
 def type_string():
-    data = request.json
-    text = data.get('text')
+    text = request.data.decode('utf-8')
     if text:
         assistant.handle_home_assistant_command('type_string', text)
-        return jsonify({"status": "success"}), 200
+        return Response("Success", mimetype='text/plain'), 200
     else:
-        return jsonify({"status": "error", "message": "No text provided"}), 400
+        return Response("Error: No text provided", mimetype='text/plain'), 400
 
 @app.route('/api/launch_file', methods=['POST'])
 def launch_file():
