@@ -23,14 +23,6 @@ copy file_nicknames.json output\
 copy icon.png output\
 copy icon.ico output\
 
-REM Create silence.mp3 if it doesn't exist
-if not exist "silence.mp3" (
-    echo Creating silence.mp3...
-    powershell -ExecutionPolicy Bypass -Command "$data = [byte[]]::new(44100 * 2); [System.IO.File]::WriteAllBytes('silence.mp3', $data); (Get-Item 'silence.mp3').CreationTime = Get-Date; (Get-Item 'silence.mp3').LastWriteTime = Get-Date"
-)
-
-REM Copy silence.mp3
-copy silence.mp3 output\
 
 echo Voice Assistant has been built and all necessary files have been copied to the 'output' folder.
 echo You can run the executable from this folder or move it to any desired location.

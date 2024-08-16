@@ -411,22 +411,6 @@ class JarvisAssistant:
                     if not self._reconnect_to_home_assistant():
                         raise Exception("Failed to reconnect to Home Assistant")
 
-                # Play a short silence before the actual audio
-                self.message_id += 1
-                silence_url = f"{self.ha_url}/local/silence.mp3"
-                silence_call = {
-                    "type": "call_service",
-                    "domain": "media_player",
-                    "service": "play_media",
-                    "service_data": {
-                        "entity_id": "media_player.kitchen_display",
-                        "media_content_id": silence_url,
-                        "media_content_type": "music"
-                    },
-                    "id": self.message_id
-                }
-                self._debug_print(f"Sending play silence command: {json.dumps(silence_call)}")
-                self._send_websocket_message(silence_call)
 
                 # Play the actual audio immediately after silence
                 self.message_id += 1
