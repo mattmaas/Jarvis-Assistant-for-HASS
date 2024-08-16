@@ -9,7 +9,6 @@ import configparser
 import websocket
 import json
 import time
-import time
 import requests
 import pyautogui
 from debug_window import debug_signals
@@ -36,6 +35,9 @@ class JarvisAssistant:
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
         self.wake_words = self._load_wake_words()
         self.rgb_control = OpenRGBControl()
+        self.last_ping_time = 0
+        self.ping_interval = 50  # Send a ping every 50 seconds
+        self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
         
         # Import and start the Flask server in a separate thread
         from api_server import run_flask_server, init_assistant
@@ -124,8 +126,15 @@ class JarvisAssistant:
 
     def _keep_alive(self):
         while self.is_running:
-            time.sleep(50)  # Send a ping every 50 seconds
-            self._send_ping()
+            current_time = time.time()
+            if current_time - self.last_ping_time > self.ping_interval:
+                self._send_ping()
+                self.last_ping_time = current_time
+            
+            if not self._check_websocket_connection():
+                self._reconnect_to_home_assistant()
+            
+            time.sleep(1)  # Check every second
 
     def _send_ping(self):
         with self.ws_lock:
@@ -145,7 +154,11 @@ class JarvisAssistant:
     def _reconnect_to_home_assistant(self):
         self._debug_print("Attempting to reconnect to Home Assistant...")
         self._disconnect_from_home_assistant()
-        self._connect_to_home_assistant()
+        reconnect_success = self._connect_to_home_assistant()
+        if reconnect_success:
+            self._debug_print("Successfully reconnected to Home Assistant")
+        else:
+            self._debug_print("Failed to reconnect to Home Assistant")
 
     def _disconnect_from_home_assistant(self):
         with self.ws_lock:
@@ -412,45 +425,54 @@ class JarvisAssistant:
                 self._debug_print(f"Unhandled event type: {event_type} (ID: {response_id})")
 
     def _connect_to_home_assistant(self):
-        with self.ws_lock:
-            try:
-                ws_protocol = "wss://" if self.ha_url.startswith("https://") else "ws://"
-                ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
-                self._debug_print(f"Attempting to connect to Home Assistant at {ws_url}")
-                self.ws = websocket.create_connection(ws_url, timeout=10)
-                
-                # Wait for auth_required message
-                auth_required = json.loads(self.ws.recv())
-                if auth_required.get("type") != "auth_required":
-                    self._debug_print(f"Unexpected initial message: {auth_required}")
-                    return False
+        max_retries = 3
+        retry_delay = 5  # seconds
 
-                auth_message = {
-                    "type": "auth",
-                    "access_token": self.ha_token
-                }
-                self._debug_print(f"Sending authentication message: {json.dumps(auth_message)}")
-                self.ws.send(json.dumps(auth_message))
+        for attempt in range(max_retries):
+            with self.ws_lock:
+                try:
+                    ws_protocol = "wss://" if self.ha_url.startswith("https://") else "ws://"
+                    ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
+                    self._debug_print(f"Attempting to connect to Home Assistant at {ws_url} (Attempt {attempt + 1}/{max_retries})")
+                    self.ws = websocket.create_connection(ws_url, timeout=10)
+                    
+                    # Wait for auth_required message
+                    auth_required = json.loads(self.ws.recv())
+                    if auth_required.get("type") != "auth_required":
+                        self._debug_print(f"Unexpected initial message: {auth_required}")
+                        continue
+
+                    auth_message = {
+                        "type": "auth",
+                        "access_token": self.ha_token
+                    }
+                    self._debug_print(f"Sending authentication message: {json.dumps(auth_message)}")
+                    self.ws.send(json.dumps(auth_message))
+                    
+                    auth_result = json.loads(self.ws.recv())
+                    if auth_result.get("type") == "auth_ok":
+                        self._debug_print("Successfully connected and authenticated with Home Assistant")
+                        self._subscribe_to_events()
+                        return True
+                    elif auth_result.get("type") == "auth_invalid":
+                        self._debug_print("Authentication failed: Invalid access token")
+                    else:
+                        self._debug_print(f"Unexpected authentication response: {auth_result}")
+                except websocket.WebSocketTimeoutException:
+                    self._debug_print("Connection to Home Assistant timed out")
+                except websocket.WebSocketConnectionClosedException:
+                    self._debug_print("WebSocket connection to Home Assistant was closed unexpectedly")
+                except json.JSONDecodeError:
+                    self._debug_print("Received invalid JSON response from Home Assistant")
+                except Exception as e:
+                    self._debug_print(f"Failed to connect to Home Assistant: {str(e)}")
                 
-                auth_result = json.loads(self.ws.recv())
-                if auth_result.get("type") == "auth_ok":
-                    self._debug_print("Successfully connected and authenticated with Home Assistant")
-                    self._subscribe_to_events()
-                    return True
-                elif auth_result.get("type") == "auth_invalid":
-                    self._debug_print("Authentication failed: Invalid access token")
-                else:
-                    self._debug_print(f"Unexpected authentication response: {auth_result}")
-            except websocket.WebSocketTimeoutException:
-                self._debug_print("Connection to Home Assistant timed out")
-            except websocket.WebSocketConnectionClosedException:
-                self._debug_print("WebSocket connection to Home Assistant was closed unexpectedly")
-            except json.JSONDecodeError:
-                self._debug_print("Received invalid JSON response from Home Assistant")
-            except Exception as e:
-                self._debug_print(f"Failed to connect to Home Assistant: {str(e)}")
-            
-            return False
+                if attempt < max_retries - 1:
+                    self._debug_print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+        
+        self._debug_print("Failed to connect to Home Assistant after all retry attempts")
+        return False
 
     def _subscribe_to_events(self):
         self.message_id += 1
