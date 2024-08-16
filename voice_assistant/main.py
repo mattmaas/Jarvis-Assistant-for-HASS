@@ -17,6 +17,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(current_dir, 'config.ini')
 
 def main():
+    global assistant
     app = QApplication(sys.argv)
     
     # Create the Jarvis assistant with the config path and increased sensitivity
@@ -178,10 +179,10 @@ def main():
     stop_action.triggered.connect(assistant.stop)  # The orange color is now set in the stop() method
     debug_action.triggered.connect(debug_window.show)
     def restart_assistant():
+        global assistant
         debug_signals.debug_signal.emit("Restarting assistant...")
         assistant.stop()
         time.sleep(1)  # Give some time for the assistant to stop
-        global assistant  # Declare assistant as global to modify it
         assistant = JarvisAssistant(CONFIG_PATH, sensitivity=0.7)  # Create a new instance
         update_ha_pipelines()  # Update pipelines after creating new instance
         assistant.start()
