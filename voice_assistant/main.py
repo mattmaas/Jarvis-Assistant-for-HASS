@@ -37,36 +37,11 @@ def main():
     stop_action = menu.addAction("Stop Listening")
     debug_action = menu.addAction("Show Debug Window")
     
-    # Create the "Auto" option
-    auto_action = QAction("Auto (Interpreter)", checkable=True)
-    auto_action.setChecked(True)  # Start as checked
-    auto_action.triggered.connect(lambda: set_ha_pipeline("auto"))
-    menu.addAction(auto_action)
-
     # Create a submenu for Home Assistant pipelines
     ha_menu = QMenu("Home Assistant Pipelines")
     pipeline_group = QActionGroup(ha_menu)
     pipeline_group.setExclusive(True)
-    
-    
-    # Add a separator
-    ha_menu.addSeparator()
-    
     menu.addMenu(ha_menu)
-
-    # Function to update Home Assistant pipelines
-    def update_ha_pipelines():
-        ha_menu.clear()
-        pipeline_group.setExclusive(False)  # Temporarily disable exclusivity
-        
-        # Always add the "Auto" option first
-        ha_menu.addAction(auto_action)
-        auto_action.setChecked(assistant.ha_pipeline == "auto")
-        
-        # Add a separator
-        ha_menu.addSeparator()
-        
-        pipeline_group.setExclusive(True)  # Re-enable exclusivity
 
     # Create a submenu for startup options
     startup_menu = menu.addMenu("Startup Options")
@@ -112,8 +87,15 @@ def main():
                     pipelines = result.get("result", {}).get("pipelines", [])
                     preferred_pipeline = result.get("result", {}).get("preferred_pipeline")
                     
-                    # Find the "jarvis" pipeline or use the first one as default
-                    default_pipeline = next((p for p in pipelines if p.get('name', '').lower() == 'jarvis'), pipelines[0] if pipelines else None)
+                    # Add "Auto (Interpreter)" option
+                    auto_action = QAction("Auto (Interpreter)", ha_menu, checkable=True)
+                    auto_action.setData("auto")
+                    auto_action.triggered.connect(lambda checked, p="auto": set_ha_pipeline(p))
+                    pipeline_group.addAction(auto_action)
+                    ha_menu.addAction(auto_action)
+                    
+                    # Add a separator
+                    ha_menu.addSeparator()
                     
                     for pipeline in pipelines:
                         pipeline_name = pipeline.get('name', 'Unknown')
@@ -139,12 +121,8 @@ def main():
     # Function to set the selected Home Assistant pipeline
     def set_ha_pipeline(pipeline_id):
         assistant.ha_pipeline = pipeline_id
-        auto_action.setChecked(pipeline_id == "auto")
         for action in pipeline_group.actions():
-            if action.data() == pipeline_id:
-                action.setChecked(True)
-            else:
-                action.setChecked(False)
+            action.setChecked(action.data() == pipeline_id)
         
         if pipeline_id == "auto":
             debug_signals.debug_signal.emit("Auto pipeline selection enabled")
