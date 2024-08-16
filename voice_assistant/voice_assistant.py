@@ -339,66 +339,59 @@ class JarvisAssistant:
                 self._debug_print("Failed to send command after all retry attempts")
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
-        try:
-            # Play a short silence before the actual audio
-            self.message_id += 1
-            silence_url = f"{self.ha_url}/local/silence.mp3"  # Make sure to add a short silence.mp3 file to your /www folder in Home Assistant
-            silence_call = {
-                "type": "call_service",
-                "domain": "media_player",
-                "service": "play_media",
-                "service_data": {
-                    "entity_id": "media_player.kitchen_display",
-                    "media_content_id": silence_url,
-                    "media_content_type": "music"
-                },
-                "id": self.message_id
-            }
-            self._debug_print(f"Sending play silence command: {json.dumps(silence_call)}")
-            self.ws.send(json.dumps(silence_call))
+        max_retries = 3
+        retry_delay = 2  # seconds
 
-            # Play the actual audio immediately after silence
-            self.message_id += 1
-            service_call = {
-                "type": "call_service",
-                "domain": "media_player",
-                "service": "play_media",
-                "service_data": {
-                    "entity_id": "media_player.kitchen_display",
-                    "media_content_id": tts_url,
-                    "media_content_type": "music"
-                },
-                "id": self.message_id
-            }
-            self._debug_print(f"Sending play audio command: {json.dumps(service_call)}")
-            self.ws.send(json.dumps(service_call))
-
-            # Wait for the response with a timeout
-            timeout = 10  # 10 seconds timeout
-            self.ws.settimeout(timeout)
+        for attempt in range(max_retries):
             try:
-                response_raw = self.ws.recv()
-                response = json.loads(response_raw)
-                self._debug_print(f"Play audio response: {json.dumps(response, indent=2)}")
+                if not self._check_websocket_connection():
+                    self._debug_print("WebSocket not connected. Attempting to reconnect...")
+                    if not self._reconnect_to_home_assistant():
+                        raise Exception("Failed to reconnect to Home Assistant")
 
-                if response.get("type") == "result":
-                    if response.get("success"):
-                        self._debug_print("Audio playing on kitchen speaker")
-                    else:
-                        error = response.get('error', {})
-                        error_message = error.get('message', 'Unknown error')
-                        self._debug_print(f"Failed to play audio: {error_message}")
-                else:
-                    self._debug_print(f"Unexpected response type: {response.get('type')}")
-            except websocket.WebSocketTimeoutException:
-                self._debug_print(f"Timeout waiting for play audio response after {timeout} seconds")
+                # Play a short silence before the actual audio
+                self.message_id += 1
+                silence_url = f"{self.ha_url}/local/silence.mp3"
+                silence_call = {
+                    "type": "call_service",
+                    "domain": "media_player",
+                    "service": "play_media",
+                    "service_data": {
+                        "entity_id": "media_player.kitchen_display",
+                        "media_content_id": silence_url,
+                        "media_content_type": "music"
+                    },
+                    "id": self.message_id
+                }
+                self._debug_print(f"Sending play silence command: {json.dumps(silence_call)}")
+                self._send_websocket_message(silence_call)
 
-        except websocket.WebSocketException as e:
-            self._debug_print(f"WebSocket error while playing audio: {str(e)}")
-        except json.JSONDecodeError as e:
-            self._debug_print(f"Error decoding JSON response: {str(e)}")
-        except Exception as e:
-            self._debug_print(f"Unexpected error playing audio on kitchen speaker: {str(e)}")
+                # Play the actual audio immediately after silence
+                self.message_id += 1
+                service_call = {
+                    "type": "call_service",
+                    "domain": "media_player",
+                    "service": "play_media",
+                    "service_data": {
+                        "entity_id": "media_player.kitchen_display",
+                        "media_content_id": tts_url,
+                        "media_content_type": "music"
+                    },
+                    "id": self.message_id
+                }
+                self._debug_print(f"Sending play audio command: {json.dumps(service_call)}")
+                self._send_websocket_message(service_call)
+
+                self._debug_print("Audio commands sent successfully")
+                return
+
+            except Exception as e:
+                self._debug_print(f"Error playing audio on kitchen speaker (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                if attempt < max_retries - 1:
+                    self._debug_print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+
+        self._debug_print("Failed to play audio after all retry attempts")
 
     def _process_events(self, response_id, events):
         for event in events:
@@ -544,3 +537,33 @@ class JarvisAssistant:
                 self._debug_print("Invalid arguments for type_string command")
         else:
             self._debug_print(f"Unknown command: {command}")
+    def _check_websocket_connection(self):
+        try:
+            self.ws.ping()
+            return True
+        except:
+            return False
+
+    def _send_websocket_message(self, message):
+        try:
+            self.ws.send(json.dumps(message))
+            timeout = 10  # 10 seconds timeout
+            self.ws.settimeout(timeout)
+            response_raw = self.ws.recv()
+            response = json.loads(response_raw)
+            self._debug_print(f"WebSocket response: {json.dumps(response, indent=2)}")
+
+            if response.get("type") == "result":
+                if response.get("success"):
+                    self._debug_print("Command executed successfully")
+                else:
+                    error = response.get('error', {})
+                    error_message = error.get('message', 'Unknown error')
+                    raise Exception(f"Failed to execute command: {error_message}")
+            else:
+                self._debug_print(f"Unexpected response type: {response.get('type')}")
+
+        except websocket.WebSocketTimeoutException:
+            raise Exception(f"Timeout waiting for WebSocket response after {timeout} seconds")
+        except Exception as e:
+            raise Exception(f"Error sending WebSocket message: {str(e)}")
