@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import PyInstaller.__main__
+import configparser
 
 def build_executable():
     # Get the directory of the current script
