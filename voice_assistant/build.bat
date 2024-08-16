@@ -1,5 +1,5 @@
 @echo off
-echo Building Portable Voice Assistant...
+echo Building Voice Assistant...
 
 REM Run the build script
 python build.py
@@ -10,19 +10,28 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-REM Create a portable directory
-mkdir portable_voice_assistant
+REM Create an output directory
+if not exist "output" mkdir output
 
 REM Copy the executable
-copy dist\JarvisAssistant.exe portable_voice_assistant\
+copy dist\JarvisAssistant.exe output\
 
 REM Copy necessary files
-copy config.ini portable_voice_assistant\
-copy wakewords.json portable_voice_assistant\
-copy file_nicknames.json portable_voice_assistant\
-copy icon.png portable_voice_assistant\
-copy icon.ico portable_voice_assistant\
+copy config.ini output\
+copy wakewords.json output\
+copy file_nicknames.json output\
+copy icon.png output\
+copy icon.ico output\
 
-echo Portable Voice Assistant has been created in the 'portable_voice_assistant' folder.
-echo You can move this folder to any location and run the executable from there.
+REM Create silence.mp3 if it doesn't exist
+if not exist "silence.mp3" (
+    echo Creating silence.mp3...
+    powershell -ExecutionPolicy Bypass -Command "$data = [byte[]]::new(44100 * 2); [System.IO.File]::WriteAllBytes('silence.mp3', $data); (Get-Item 'silence.mp3').CreationTime = Get-Date; (Get-Item 'silence.mp3').LastWriteTime = Get-Date"
+)
+
+REM Copy silence.mp3
+copy silence.mp3 output\
+
+echo Voice Assistant has been built and all necessary files have been copied to the 'output' folder.
+echo You can run the executable from this folder or move it to any desired location.
 pause
