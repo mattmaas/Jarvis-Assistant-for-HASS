@@ -3,6 +3,20 @@ import sys
 import shutil
 import PyInstaller.__main__
 import configparser
+import threading
+import json
+import time
+import websocket
+import pyaudio
+import struct
+import speech_recognition as sr
+import io
+import openai
+from datetime import datetime
+import pyautogui
+from debug_window import debug_signals
+from openrgb_control import OpenRGBControl
+import pvporcupine
 
 def build_executable():
     # Get the directory of the current script
@@ -69,6 +83,7 @@ class JarvisAssistant:
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
         self.wake_words = self._load_wake_words()
         self.rgb_control = OpenRGBControl()
+        self.debug_signals = debug_signals
         self.last_ping_time = 0
         self.ping_interval = 50  # Send a ping every 50 seconds
         self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
@@ -565,7 +580,7 @@ class JarvisAssistant:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         formatted_message = f"[{timestamp}] {message}"
         print(formatted_message)
-        debug_signals.debug_signal.emit(formatted_message)
+        self.debug_signals.debug_signal.emit(formatted_message)
 
     def type_string(self, text):
         """
