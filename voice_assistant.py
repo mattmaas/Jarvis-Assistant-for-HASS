@@ -18,11 +18,11 @@ import pvporcupine
 import re
 import threading
 class JarvisAssistant:
-    def __init__(self, config_path, sensitivity=0.5):
+    def __init__(self, config_path):
         self.config = configparser.ConfigParser()
         self.config.read(config_path)
         self.access_key = self.config['PORCUPINE']['ACCESS_KEY']
-        self.sensitivity = sensitivity
+        self.sensitivity = float(self.config['PORCUPINE'].get('SENSITIVITY', '0.5'))
         self.porcupine = None
         self.pa = None
         self.audio_stream = None
@@ -36,7 +36,7 @@ class JarvisAssistant:
         self.message_id = 0  # Initialize message ID counter
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
         self.wake_words = self._load_wake_words()
-        self.rgb_control = OpenRGBControl()
+        self.rgb_control = OpenRGBControl(self.config)
         self.debug_signals = debug_signals
         self.last_ping_time = 0
         self.ping_interval = 50  # Send a ping every 50 seconds
@@ -632,13 +632,15 @@ class JarvisAssistant:
     def _play_chime(self):
         try:
             self.message_id += 1
-            chime_url = f"{self.ha_url}/local/chime.mp3"  # Adjust this URL to the actual location of your chime sound file
+            chime_file = self.config['AUDIO'].get('CHIME_FILE', 'chime.mp3')
+            chime_url = f"{self.ha_url}/local/{chime_file}"
+            kitchen_speaker = self.config['AUDIO'].get('KITCHEN_SPEAKER', 'media_player.kitchen_display')
             service_call = {
                 "type": "call_service",
                 "domain": "media_player",
                 "service": "play_media",
                 "service_data": {
-                    "entity_id": "media_player.kitchen_display",
+                    "entity_id": kitchen_speaker,
                     "media_content_id": chime_url,
                     "media_content_type": "music"
                 },

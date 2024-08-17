@@ -21,7 +21,7 @@ def main():
     app = QApplication(sys.argv)
     
     # Create the Jarvis assistant with the config path and increased sensitivity
-    assistant = JarvisAssistant(CONFIG_PATH, sensitivity=0.7)
+    assistant = JarvisAssistant(CONFIG_PATH)
     
     # Create the debug window
     debug_window = DebugWindow()
