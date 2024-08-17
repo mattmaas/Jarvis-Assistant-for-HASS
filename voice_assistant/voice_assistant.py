@@ -218,7 +218,7 @@ class JarvisAssistant:
                 recognizer.dynamic_energy_threshold = True
                 recognizer.energy_threshold = 300  # Lower value for increased sensitivity
                 recognizer.pause_threshold = 0.8  # Reduced pause threshold for quicker response
-                audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
+                audio = recognizer.listen(source, timeout=10, phrase_time_limit=120)
 
             self._set_processing_color()  # Set color to orange after listening
 
