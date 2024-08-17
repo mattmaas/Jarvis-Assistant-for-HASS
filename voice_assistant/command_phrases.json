@@ -23,5 +23,17 @@
     "add file nickname",
     "create file shortcut",
     "set file alias"
+  ],
+  "stop_listening": [
+    "stop listening",
+    "stop assistant",
+    "pause listening",
+    "go to sleep"
+  ],
+  "start_listening": [
+    "start listening",
+    "start assistant",
+    "resume listening",
+    "wake up"
   ]
 }

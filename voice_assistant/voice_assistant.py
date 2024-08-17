@@ -311,26 +311,24 @@ class JarvisAssistant:
         elif cmd_type == "start_listening":
             self.start()
             confirmation = "I've started listening"
+        elif cmd_type == "type_command":
+            prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. Remove any phrases like 'type into my pc', 'type in to my pc', 'type into pc', 'type in to pc', 'type in pc', 'type on pc', 'type for me', 'type into my computer', 'enter text', 'paste', or 'enter into my computer' from the beginning of the input. If the input suggests creating content, generate that content directly. Aim for a response of up to 1000 characters."
+            extracted_info = self._query_gpt4o_mini(prompt, max_tokens=1000)
+            self._type_string(extracted_info)
+            confirmation = f"I've typed the text for you"
+        elif cmd_type == "launch_file":
+            prompt = f"Extract only the file or program name to be launched from this input: {command}"
+            extracted_info = self._query_gpt4o_mini(prompt)
+            self._launch_file(extracted_info)
+            confirmation = f"I've launched the file or program: {extracted_info}"
+        elif cmd_type == "add_file_nickname":
+            prompt = f"Extract the nickname and filename from this input: {command}. Return them separated by a comma, without any additional text."
+            extracted_info = self._query_gpt4o_mini(prompt)
+            nickname, filename = extracted_info.split(',')
+            self._add_file_nickname(nickname.strip(), filename.strip())
+            confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
         else:
-            # Use GPT-4o-mini to process the command
-            if cmd_type == "type_command":
-                prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. Remove any phrases like 'type into my pc', 'type in to my pc', 'type into pc', 'type in to pc', 'type in pc', 'type on pc', 'type for me', 'type into my computer', 'enter text', 'paste', or 'enter into my computer' from the beginning of the input. If the input suggests creating content, generate that content directly. Aim for a response of up to 1000 characters."
-                extracted_info = self._query_gpt4o_mini(prompt, max_tokens=1000)
-                self._type_string(extracted_info)
-                confirmation = f"I've typed the text for you"
-            elif cmd_type == "launch_file":
-                prompt = f"Extract only the file or program name to be launched from this input: {command}"
-                extracted_info = self._query_gpt4o_mini(prompt)
-                self._launch_file(extracted_info)
-                confirmation = f"I've launched the file or program: {extracted_info}"
-            elif cmd_type == "add_file_nickname":
-                prompt = f"Extract the nickname and filename from this input: {command}. Return them separated by a comma, without any additional text."
-                extracted_info = self._query_gpt4o_mini(prompt)
-                nickname, filename = extracted_info.split(',')
-                self._add_file_nickname(nickname.strip(), filename.strip())
-                confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
-            else:
-                confirmation = "I'm not sure how to execute that command."
+            confirmation = "I'm not sure how to execute that command."
 
         self._send_confirmation_to_ha(confirmation)
 
