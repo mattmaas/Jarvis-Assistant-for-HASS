@@ -119,6 +119,7 @@ pyinstaller_args = [
     f'--add-data=config.ini{separator}.',
     f'--add-data=wakewords.json{separator}.',
     f'--add-data=file_nicknames.json{separator}.',
+    '--add-binary=C:\\Users\\Matt\\AppData\\Local\\Programs\\Miniconda3\\Library\\bin\\libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll;.',
     '--icon=icon.ico',
     '--hidden-import=websocket',
     '--hidden-import=pvporcupine',
@@ -154,9 +155,6 @@ except Exception as e:
     import traceback
     traceback.print_exc()
     sys.exit(1)
-
-# Run PyInstaller
-PyInstaller.__main__.run(pyinstaller_args)
 
 # Clean up temporary file
 os.remove('embedded_data.py')
