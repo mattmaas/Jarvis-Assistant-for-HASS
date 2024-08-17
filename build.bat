@@ -41,6 +41,8 @@ REM Copy necessary files
 copy config.ini output\
 copy icon.png output\
 copy icon.ico output\
+copy wakewords.json output\
+copy file_nicknames.json output\
 
 echo Portable Voice Assistant has been built and all necessary files have been copied to the 'output' folder.
 echo You can run the executable from this folder or move it to any desired location.
