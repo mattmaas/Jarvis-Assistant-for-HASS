@@ -8,9 +8,9 @@ Jarvis isn't just another voice assistant – it's your personal AI-powered home
 
 - **Effortless Smart Home Control**: Command your entire smart home ecosystem with natural language. From adjusting lights to setting the perfect temperature, Jarvis understands and executes your wishes instantly. Leveraging the full power of Home Assistant's vast ecosystem, Jarvis seamlessly integrates with Home Assistant's Assist pipelines, allowing for complex automations and interactions with all your smart devices.
 
-- **Stunning RGB Lighting Effects**: Transform your space with vibrant, mood-enhancing lighting. Jarvis's OpenRGB integration lets you create the perfect ambiance for any occasion, all with a simple voice command.
-
 - **AI-Powered Conversations**: Powered by OpenAI's cutting-edge language models, Jarvis engages in natural, context-aware conversations. It's not just following commands; it's understanding your intent.
+
+- **Stunning RGB Lighting Effects**: Transform your space with vibrant, mood-enhancing lighting. Jarvis's OpenRGB integration lets you create the perfect ambiance for any occasion, all with a simple voice command.
 
 - **Crystal-Clear Voice Feedback**: Experience responses like never before with high-quality audio feedback. Jarvis's voice is not just functional; it's a pleasure to listen to.
 
@@ -55,13 +55,6 @@ Once Jarvis is running:
 1. Say the wake word "Jarvis" to activate the assistant.
 2. Give your command or ask a question.
 3. Jarvis will process your request and respond accordingly.
-
-### Example Commands
-
-- "Jarvis, turn on the living room lights"
-- "Jarvis, what's the temperature outside?"
-- "Jarvis, type an email to John"
-- "Jarvis, open my project folder"
 
 ## Installation Guide
 
@@ -137,30 +130,6 @@ The `config.ini` file allows you to customize various aspects of Jarvis. Here's 
 
 Ensure all API keys and tokens are kept secret and not shared publicly. Adjust these settings according to your specific setup and preferences.
 
-## Auto Interpreter Mode for Voice Pipelines
-
-Jarvis starts in auto interpreter mode by default for voice pipelines. This intelligent feature automatically selects the most appropriate pipeline based on the content of your voice command. Here's how it works:
-
-1. When you give a voice command, Jarvis analyzes the content of your speech.
-2. Based on keywords and context, it selects the most suitable Home Assistant Assist pipeline to process your request.
-3. This allows for more flexible and context-aware responses, as different pipelines can be optimized for various types of commands (e.g., smart home control, information queries, or complex tasks).
-
-You can still manually select a specific pipeline if needed, but the auto interpreter mode ensures that Jarvis adapts to your diverse needs without requiring explicit pipeline selection for each command.
-
-## Usage
-
-Once Jarvis is running:
-
-1. Say the wake word "Jarvis" to activate the assistant.
-2. Give your command or ask a question.
-3. Jarvis will process your request and respond accordingly.
-
-### Example Commands
-
-- "Jarvis, turn on the living room lights"
-- "Jarvis, what's the temperature outside?"
-- "Jarvis, type an email to John"
-- "Jarvis, open my project folder"
 
 ## Troubleshooting
 
