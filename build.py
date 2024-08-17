@@ -88,3 +88,39 @@ def build_executable():
 
 if __name__ == "__main__":
     build_executable()
+import PyInstaller.__main__
+import os
+import json
+
+def read_json_file(file_path):
+    with open(file_path, 'r') as f:
+        return json.load(f)
+
+# Read JSON files
+wakewords = read_json_file('wakewords.json')
+file_nicknames = read_json_file('file_nicknames.json')
+
+# Create a Python file to store the JSON data
+with open('embedded_data.py', 'w') as f:
+    f.write(f"WAKEWORDS = {json.dumps(wakewords)}\n")
+    f.write(f"FILE_NICKNAMES = {json.dumps(file_nicknames)}\n")
+
+# PyInstaller command
+pyinstaller_args = [
+    'main.py',
+    '--name=JarvisAssistant',
+    '--onefile',
+    '--windowed',
+    '--add-data=icon.png:.',
+    '--add-data=icon.ico:.',
+    '--add-data=embedded_data.py:.',
+    '--icon=icon.ico'
+]
+
+# Run PyInstaller
+PyInstaller.__main__.run(pyinstaller_args)
+
+# Clean up temporary file
+os.remove('embedded_data.py')
+
+print("Build completed successfully.")

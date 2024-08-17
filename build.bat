@@ -18,8 +18,6 @@ copy dist\JarvisAssistant.exe output\
 
 REM Copy necessary files
 copy config.ini output\
-copy wakewords.json output\
-copy file_nicknames.json output\
 copy icon.png output\
 copy icon.ico output\
 
