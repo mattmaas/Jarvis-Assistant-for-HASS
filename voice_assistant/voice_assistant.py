@@ -17,6 +17,7 @@ import pyautogui
 from debug_window import debug_signals
 from openrgb_control import OpenRGBControl
 import pvporcupine
+import re
 
 def build_executable():
     # Get the directory of the current script
@@ -315,8 +316,89 @@ class JarvisAssistant:
         if "never mind" in command.lower() or "nevermind" in command.lower():
             self._debug_print("Command contains 'never mind' or 'nevermind'. Not transmitting to assistant.")
             return
+        
+        # Load command phrases
+        with open('command_phrases.json', 'r') as f:
+            command_phrases = json.load(f)
+        
+        # Check for local commands
+        for cmd_type, phrases in command_phrases.items():
+            if any(phrase in command.lower() for phrase in phrases):
+                self._execute_local_command(cmd_type, command)
+                return
+        
+        # If no local command matched, send to Home Assistant
         pipeline_id = self._select_pipeline(command)
         self._send_to_home_assistant(command, pipeline_id)
+
+    def _execute_local_command(self, cmd_type: str, command: str):
+        self._debug_print(f"Executing local command: {cmd_type}")
+        
+        # Use GPT-4o-mini to extract relevant information
+        prompt = f"Extract the relevant information for the '{cmd_type}' command from this input: {command}"
+        extracted_info = self._query_gpt4o_mini(prompt)
+        
+        if cmd_type == "type_command":
+            self.type_string(extracted_info)
+            confirmation = f"I've typed the text for you: {extracted_info}"
+        elif cmd_type == "launch_file":
+            self._launch_file(extracted_info)
+            confirmation = f"I've launched the file or program: {extracted_info}"
+        elif cmd_type == "add_file_nickname":
+            nickname, filename = extracted_info.split(',')
+            self._add_file_nickname(nickname.strip(), filename.strip())
+            confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
+        else:
+            confirmation = "I'm not sure how to execute that command."
+        
+        self._send_confirmation_to_ha(confirmation)
+
+    def _query_gpt4o_mini(self, prompt: str) -> str:
+        try:
+            response = openai.Completion.create(
+                engine="gpt-4o-mini",
+                prompt=prompt,
+                max_tokens=50,
+                n=1,
+                stop=None,
+                temperature=0.5,
+            )
+            return response.choices[0].text.strip()
+        except Exception as e:
+            self._debug_print(f"Error querying GPT-4o-mini: {str(e)}")
+            return ""
+
+    def _send_confirmation_to_ha(self, confirmation: str):
+        pipeline_id = self._select_pipeline("confirmation")
+        message = {
+            "type": "assist_pipeline/run",
+            "start_stage": "tts",
+            "end_stage": "tts",
+            "input": {
+                "text": confirmation
+            },
+            "pipeline": pipeline_id,
+            "id": self.message_id
+        }
+        self._send_websocket_message(message)
+
+    def _launch_file(self, filename: str):
+        try:
+            os.startfile(filename)
+            self._debug_print(f"Launched file: {filename}")
+        except Exception as e:
+            self._debug_print(f"Error launching file: {str(e)}")
+
+    def _add_file_nickname(self, nickname: str, filename: str):
+        try:
+            with open('file_nicknames.json', 'r+') as f:
+                nicknames = json.load(f)
+                nicknames[nickname] = filename
+                f.seek(0)
+                json.dump(nicknames, f, indent=2)
+            self._debug_print(f"Added nickname '{nickname}' for file '{filename}'")
+        except Exception as e:
+            self._debug_print(f"Error adding file nickname: {str(e)}")
 
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
@@ -587,13 +669,12 @@ class JarvisAssistant:
 
     def type_string(self, text):
         """
-        Types the given string using pyautogui after a 5-second delay.
-        This method can be called from Home Assistant.
+        Types the given string using pyautogui after a 3-second delay.
         """
         self._debug_print(f"Preparing to type string: {text}")
         try:
-            self._debug_print("Waiting for 5 seconds before typing...")
-            time.sleep(5)
+            self._debug_print("Waiting for 3 seconds before typing...")
+            time.sleep(3)
             self._debug_print(f"Typing string: {text}")
             pyautogui.write(text, interval=0.05)  # Add a small delay between characters
             self._debug_print("String typed successfully")
@@ -604,13 +685,8 @@ class JarvisAssistant:
         """
         Handles commands received from Home Assistant.
         """
-        if command == "type_string":
-            if args and isinstance(args, str):
-                self.type_string(args)
-            else:
-                self._debug_print("Invalid arguments for type_string command")
-        else:
-            self._debug_print(f"Unknown command: {command}")
+        self._debug_print(f"Received command from Home Assistant: {command}")
+        self._execute_command(f"{command} {args}")
     def _check_websocket_connection(self):
         try:
             self.ws.ping()

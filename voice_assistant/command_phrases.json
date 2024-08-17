@@ -1,0 +1,18 @@
+{
+  "type_command": [
+    "type into my pc",
+    "type for me",
+    "type into my computer",
+    "enter text"
+  ],
+  "launch_file": [
+    "open file",
+    "launch file",
+    "start program"
+  ],
+  "add_file_nickname": [
+    "add file nickname",
+    "create file shortcut",
+    "set file alias"
+  ]
+}
