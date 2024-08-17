@@ -88,14 +88,31 @@ Before installing Jarvis, ensure you have the following:
 
 ## Configuration
 
-The `config.ini` file allows you to customize various aspects of Jarvis:
+The `config.ini` file allows you to customize various aspects of Jarvis. Here's a detailed breakdown of each section:
 
-- `PORCUPINE`: Set your wake word detection sensitivity
-- `STT`: Choose your speech-to-text provider (Google or Whisper)
-- `OPENAI`: Configure your OpenAI API settings
-- `HOME_ASSISTANT`: Set up your Home Assistant connection
-- `OPENRGB`: Enable or disable RGB lighting control
-- `AUDIO`: Customize audio feedback settings
+### PORCUPINE
+- `ACCESS_KEY`: Your Porcupine API key (string)
+- `SENSITIVITY`: Wake word detection sensitivity (float between 0 and 1, e.g., 0.5)
+
+### STT (Speech-to-Text)
+- `PROVIDER`: Choose your STT provider ("google" or "whisper")
+
+### OPENAI
+- `API_KEY`: Your OpenAI API key (string)
+
+### HOME_ASSISTANT
+- `ACCESS_TOKEN`: Your Home Assistant long-lived access token (string)
+- `URL`: The URL of your Home Assistant instance (e.g., "https://your-home-assistant-url.com")
+
+### OPENRGB
+- `ENABLED`: Enable or disable RGB lighting control (true or false)
+- `DEVICE_TYPE`: The type of RGB device to control (e.g., "MICROPHONE", "KEYBOARD", etc.)
+
+### AUDIO
+- `CHIME_FILE`: The filename of your chime sound (e.g., "chime.mp3")
+- `KITCHEN_SPEAKER`: The entity ID of your kitchen speaker in Home Assistant (e.g., "media_player.kitchen_display")
+
+Ensure all API keys and tokens are kept secret and not shared publicly. Adjust these settings according to your specific setup and preferences.
 
 ## Usage
 
