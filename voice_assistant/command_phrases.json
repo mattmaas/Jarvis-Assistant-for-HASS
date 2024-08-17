@@ -1,9 +1,18 @@
 {
   "type_command": [
     "type into my pc",
+    "type in to my pc",
+    "type into pc",
+    "type in to pc",
+    "type in pc",
+    "type on pc",
     "type for me",
     "type into my computer",
-    "enter text"
+    "enter text",
+    "into my pc",
+    "in to my pc",
+    "paste",
+    "enter into my computer"
   ],
   "launch_file": [
     "open file",
@@ -14,13 +23,5 @@
     "add file nickname",
     "create file shortcut",
     "set file alias"
-  ],
-  "stop_listening": [
-    "stop listening",
-    "pause listening"
-  ],
-  "start_listening": [
-    "start listening",
-    "resume listening"
   ]
 }
