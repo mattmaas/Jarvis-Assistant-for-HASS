@@ -103,6 +103,8 @@ class JarvisAssistant:
                 self._debug_print(f"Error setting RGB color: {str(e)}")
             
             self._debug_print("Assistant stopped")
+        else:
+            self._debug_print("Assistant is already stopped")
 
     def _run(self):
         try:
@@ -136,8 +138,7 @@ class JarvisAssistant:
                 self.pa.terminate()
             if self.porcupine:
                 self.porcupine.delete()
-            if self.is_running:
-                self.rgb_control.set_profile("ice")  # Only set 'ice' profile if assistant is still running
+            # Remove the setting of 'ice' profile here
 
     def _keep_alive(self):
         while self.is_running:
