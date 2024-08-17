@@ -116,7 +116,7 @@ Ensure all API keys and tokens are kept secret and not shared publicly. Adjust t
 
 ## Auto Interpreter Mode for Voice Pipelines
 
-Jarvis now starts in auto interpreter mode by default for voice pipelines. This intelligent feature automatically selects the most appropriate pipeline based on the content of your voice command. Here's how it works:
+Jarvis starts in auto interpreter mode by default for voice pipelines. This intelligent feature automatically selects the most appropriate pipeline based on the content of your voice command. Here's how it works:
 
 1. When you give a voice command, Jarvis analyzes the content of your speech.
 2. Based on keywords and context, it selects the most suitable Home Assistant Assist pipeline to process your request.
