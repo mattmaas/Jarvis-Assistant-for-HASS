@@ -105,6 +105,9 @@ class JarvisAssistant:
             self._debug_print("Assistant stopped")
         else:
             self._debug_print("Assistant is already stopped")
+        
+        # Ensure the color stays orange even after stopping
+        self.rgb_control.set_mic_color((255, 69, 0))
 
     def _run(self):
         try:
@@ -304,7 +307,10 @@ class JarvisAssistant:
             pipeline_id = self._select_pipeline(command)
             self._send_to_home_assistant(command, pipeline_id)
         finally:
-            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing
+            if self.is_running:
+                self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
+            else:
+                self.rgb_control.set_mic_color((255, 69, 0))  # Maintain orange color if stopped
 
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
