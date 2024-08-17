@@ -88,20 +88,21 @@ class JarvisAssistant:
                     self._debug_print("Failed to set 'ice' profile after all attempts")
 
     def stop(self):
-        self.is_running = False
-        self._debug_print("Stopping assistant...")
-        try:
-            self._disconnect_from_home_assistant()
-        except Exception as e:
-            self._debug_print(f"Error disconnecting from Home Assistant: {str(e)}")
-        
-        try:
-            self.rgb_control.set_mic_color((255, 69, 0))  # Set to a more vibrant orange color (Red-Orange)
-            self._debug_print("Set RGB color to (255, 69, 0)")
-        except Exception as e:
-            self._debug_print(f"Error setting RGB color: {str(e)}")
-        
-        self._debug_print("Assistant stopped")
+        if self.is_running:
+            self.is_running = False
+            self._debug_print("Stopping assistant...")
+            try:
+                self._disconnect_from_home_assistant()
+            except Exception as e:
+                self._debug_print(f"Error disconnecting from Home Assistant: {str(e)}")
+            
+            try:
+                self.rgb_control.set_mic_color((255, 69, 0))  # Set to a more vibrant orange color (Red-Orange)
+                self._debug_print("Set RGB color to (255, 69, 0)")
+            except Exception as e:
+                self._debug_print(f"Error setting RGB color: {str(e)}")
+            
+            self._debug_print("Assistant stopped")
 
     def _run(self):
         try:
@@ -135,7 +136,8 @@ class JarvisAssistant:
                 self.pa.terminate()
             if self.porcupine:
                 self.porcupine.delete()
-            self.rgb_control.set_profile("ice")  # Ensure 'ice' profile is set when stopping
+            if self.is_running:
+                self.rgb_control.set_profile("ice")  # Only set 'ice' profile if assistant is still running
 
     def _keep_alive(self):
         while self.is_running:
@@ -221,7 +223,8 @@ class JarvisAssistant:
                 recognizer.pause_threshold = 0.8  # Reduced pause threshold for quicker response
                 audio = recognizer.listen(source, timeout=10, phrase_time_limit=120)
 
-            self._set_processing_color()  # Set color to orange after listening
+            if self.is_running:
+                self._set_processing_color()  # Set color to orange after listening
 
             try:
                 if self.stt_provider == "google":
@@ -258,7 +261,8 @@ class JarvisAssistant:
         except Exception as e:
             self._debug_print(f"An error occurred: {e}")
         finally:
-            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing
+            if self.is_running:
+                self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing only if still running
 
     def _select_pipeline(self, text: str) -> str:
         if self.ha_pipeline == "auto":
