@@ -91,8 +91,19 @@ class JarvisAssistant:
 
     def stop(self):
         self.is_running = False
-        self._disconnect_from_home_assistant()
-        self.rgb_control.set_mic_color((255, 69, 0))  # Set to a more vibrant orange color (Red-Orange)
+        self._debug_print("Stopping assistant...")
+        try:
+            self._disconnect_from_home_assistant()
+        except Exception as e:
+            self._debug_print(f"Error disconnecting from Home Assistant: {str(e)}")
+        
+        try:
+            self.rgb_control.set_mic_color((255, 69, 0))  # Set to a more vibrant orange color (Red-Orange)
+            self._debug_print("Set RGB color to (255, 69, 0)")
+        except Exception as e:
+            self._debug_print(f"Error setting RGB color: {str(e)}")
+        
+        self._debug_print("Assistant stopped")
 
     def _run(self):
         try:
@@ -111,12 +122,13 @@ class JarvisAssistant:
                 pcm = struct.unpack_from("h" * self.porcupine.frame_length, pcm)
 
                 keyword_index = self.porcupine.process(pcm)
-                if keyword_index >= 0:
+                if keyword_index >= 0 and self.is_running:
                     self._debug_print("Wake word 'Jarvis' detected")
                     self._play_chime()
                     self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
                     self._process_speech()
-                    self.rgb_control.set_profile("ice")  # Load 'ice' profile after processing
+                    if self.is_running:
+                        self.rgb_control.set_profile("ice")  # Load 'ice' profile after processing
 
         finally:
             if self.audio_stream:
@@ -310,7 +322,10 @@ class JarvisAssistant:
             else:
                 confirmation = "I'm not sure how to execute that command."
         
-        self._send_confirmation_to_ha(confirmation)
+        if cmd_type != "stop_listening":
+            self._send_confirmation_to_ha(confirmation)
+        else:
+            self._debug_print(confirmation)
 
     def _query_gpt4o_mini(self, prompt: str) -> str:
         try:
