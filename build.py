@@ -153,6 +153,7 @@ def build_executable():
         f'--add-data=config.ini{separator}.',
         f'--add-data=wakewords.json{separator}.',
         f'--add-data=file_nicknames.json{separator}.',
+        f'--add-data=command_phrases.json{separator}.',
         *dll_args,  # Add the DLL arguments dynamically
         f'--icon={icon_file}',
         '--hidden-import=websocket',
