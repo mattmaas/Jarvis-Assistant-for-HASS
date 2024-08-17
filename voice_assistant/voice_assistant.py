@@ -128,8 +128,7 @@ class JarvisAssistant:
                     self._play_chime()
                     self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
                     self._process_speech()
-                    if self.is_running:
-                        self.rgb_control.set_profile("ice")  # Load 'ice' profile after processing
+                    # Remove setting 'ice' profile here
 
         finally:
             if self.audio_stream:
@@ -138,7 +137,6 @@ class JarvisAssistant:
                 self.pa.terminate()
             if self.porcupine:
                 self.porcupine.delete()
-            # Remove the setting of 'ice' profile here
 
     def _keep_alive(self):
         while self.is_running:
@@ -262,8 +260,8 @@ class JarvisAssistant:
         except Exception as e:
             self._debug_print(f"An error occurred: {e}")
         finally:
-            if self.is_running:
-                self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing only if still running
+            # Remove setting 'ice' profile here
+            pass
 
     def _select_pipeline(self, text: str) -> str:
         if self.ha_pipeline == "auto":
