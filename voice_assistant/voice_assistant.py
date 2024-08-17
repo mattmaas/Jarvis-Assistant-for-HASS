@@ -314,7 +314,7 @@ class JarvisAssistant:
         else:
             # Use GPT-4o-mini to process the command
             if cmd_type == "type_command":
-                prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. If the input suggests creating content, generate that content directly. Aim for a response of up to 1000 characters."
+                prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. Remove any phrases like 'type into my pc', 'type in to my pc', 'type into pc', 'type in to pc', 'type in pc', 'type on pc', 'type for me', 'type into my computer', 'enter text', 'paste', or 'enter into my computer' from the beginning of the input. If the input suggests creating content, generate that content directly. Aim for a response of up to 1000 characters."
                 extracted_info = self._query_gpt4o_mini(prompt, max_tokens=1000)
                 self._type_string(extracted_info)
                 confirmation = f"I've typed the text for you"
