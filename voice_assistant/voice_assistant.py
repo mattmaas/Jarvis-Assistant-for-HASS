@@ -296,7 +296,11 @@ class JarvisAssistant:
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
         
-        # Use GPT-4o-mini to extract relevant information
+        if cmd_type in ["stop_listening", "start_listening"]:
+            # These commands are handled directly in _execute_command
+            return
+        
+        # Use GPT-4o-mini to extract relevant information for other commands
         prompt = f"Extract the relevant information for the '{cmd_type}' command from this input: {command}"
         extracted_info = self._query_gpt4o_mini(prompt)
         
@@ -317,15 +321,18 @@ class JarvisAssistant:
 
     def _query_gpt4o_mini(self, prompt: str) -> str:
         try:
-            response = openai.Completion.create(
-                engine="gpt-4o-mini",
-                prompt=prompt,
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ],
                 max_tokens=50,
                 n=1,
                 stop=None,
                 temperature=0.5,
             )
-            return response.choices[0].text.strip()
+            return response.choices[0].message['content'].strip()
         except Exception as e:
             self._debug_print(f"Error querying GPT-4o-mini: {str(e)}")
             return ""
