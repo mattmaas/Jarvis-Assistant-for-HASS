@@ -269,16 +269,6 @@ class JarvisAssistant:
             self._debug_print("Command contains 'never mind' or 'nevermind'. Not transmitting to assistant.")
             return
         
-        # Check for stop and start listening commands
-        if any(phrase in command.lower() for phrase in ["stop listening", "pause listening"]):
-            self.stop()
-            self._debug_print("Stopped listening")
-            return
-        elif any(phrase in command.lower() for phrase in ["start listening", "resume listening"]):
-            self.start()
-            self._debug_print("Started listening")
-            return
-        
         # Load command phrases
         with open('command_phrases.json', 'r') as f:
             command_phrases = json.load(f)
@@ -296,26 +286,29 @@ class JarvisAssistant:
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
         
-        if cmd_type in ["stop_listening", "start_listening"]:
-            # These commands are handled directly in _execute_command
-            return
-        
-        # Use GPT-4o-mini to extract relevant information for other commands
-        prompt = f"Extract the relevant information for the '{cmd_type}' command from this input: {command}"
-        extracted_info = self._query_gpt4o_mini(prompt)
-        
-        if cmd_type == "type_command":
-            self.type_string(extracted_info)
-            confirmation = f"I've typed the text for you: {extracted_info}"
-        elif cmd_type == "launch_file":
-            self._launch_file(extracted_info)
-            confirmation = f"I've launched the file or program: {extracted_info}"
-        elif cmd_type == "add_file_nickname":
-            nickname, filename = extracted_info.split(',')
-            self._add_file_nickname(nickname.strip(), filename.strip())
-            confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
+        if cmd_type == "stop_listening":
+            self.stop()
+            confirmation = "I've stopped listening"
+        elif cmd_type == "start_listening":
+            self.start()
+            confirmation = "I've started listening"
         else:
-            confirmation = "I'm not sure how to execute that command."
+            # Use GPT-4o-mini to extract relevant information for other commands
+            prompt = f"Extract the relevant information for the '{cmd_type}' command from this input: {command}"
+            extracted_info = self._query_gpt4o_mini(prompt)
+            
+            if cmd_type == "type_command":
+                self.type_string(extracted_info)
+                confirmation = f"I've typed the text for you: {extracted_info}"
+            elif cmd_type == "launch_file":
+                self._launch_file(extracted_info)
+                confirmation = f"I've launched the file or program: {extracted_info}"
+            elif cmd_type == "add_file_nickname":
+                nickname, filename = extracted_info.split(',')
+                self._add_file_nickname(nickname.strip(), filename.strip())
+                confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
+            else:
+                confirmation = "I'm not sure how to execute that command."
         
         self._send_confirmation_to_ha(confirmation)
 
