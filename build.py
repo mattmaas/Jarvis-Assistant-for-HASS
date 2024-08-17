@@ -96,16 +96,14 @@ import os
 import json
 import sys
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 
 def read_json_file(file_path):
     with open(file_path, 'r') as f:
         return json.load(f)
 
 def build_executable():
-    # Get the directory of the current script
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Define paths
     main_script = os.path.join(current_dir, 'main.py')
     icon_file = os.path.join(current_dir, 'icon.ico')
     build_dir = os.path.join(current_dir, "build")
@@ -116,9 +114,12 @@ def build_executable():
         if os.path.exists(dir_name):
             shutil.rmtree(dir_name)
     
-    # Read JSON files
-    wakewords = read_json_file('wakewords.json')
-    file_nicknames = read_json_file('file_nicknames.json')
+    # Read JSON files in parallel
+    with ThreadPoolExecutor() as executor:
+        wakewords_future = executor.submit(read_json_file, 'wakewords.json')
+        file_nicknames_future = executor.submit(read_json_file, 'file_nicknames.json')
+        wakewords = wakewords_future.result()
+        file_nicknames = file_nicknames_future.result()
 
     # Create a Python file to store the JSON data
     with open('embedded_data.py', 'w') as f:
@@ -132,13 +133,7 @@ def build_executable():
         'tbb12.dll',
         'api-ms-win-crt-heap-l1-1-0.dll'
     ]
-    dll_args = []
-    for dll_name in dll_names:
-        dll_path = os.path.join(conda_path, 'Library', 'bin', dll_name)
-        if os.path.exists(dll_path):
-            dll_args.append(f'--add-binary={dll_path};.')
-        else:
-            print(f"Warning: {dll_name} not found. This may cause issues.")
+    dll_args = [f'--add-binary={os.path.join(conda_path, "Library", "bin", dll)}:.' for dll in dll_names if os.path.exists(os.path.join(conda_path, "Library", "bin", dll))]
 
     # PyInstaller command
     separator = ';' if sys.platform.startswith('win') else ':'
@@ -154,7 +149,7 @@ def build_executable():
         f'--add-data=wakewords.json{separator}.',
         f'--add-data=file_nicknames.json{separator}.',
         f'--add-data=command_phrases.json{separator}.',
-        *dll_args,  # Add the DLL arguments dynamically
+        *dll_args,
         f'--icon={icon_file}',
         '--hidden-import=websocket',
         '--hidden-import=pvporcupine',
@@ -179,7 +174,8 @@ def build_executable():
         f'--workpath={build_dir}',
         f'--distpath={dist_dir}',
         '--clean',
-        '--log-level=DEBUG',
+        '--log-level=WARN',
+        '--noconfirm',
     ]
 
     # Run PyInstaller
@@ -192,9 +188,10 @@ def build_executable():
         import traceback
         traceback.print_exc()
         sys.exit(1)
-
-    # Clean up temporary file
-    os.remove('embedded_data.py')
+    finally:
+        # Clean up temporary file
+        if os.path.exists('embedded_data.py'):
+            os.remove('embedded_data.py')
 
 if __name__ == "__main__":
     build_executable()
