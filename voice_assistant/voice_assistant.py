@@ -663,15 +663,15 @@ class JarvisAssistant:
 
     def _type_string(self, text):
         """
-        Pastes the given string using pyautogui.
+        Types the given string using pyautogui.
         """
-        self._debug_print(f"Preparing to paste string: {text}")
+        self._debug_print(f"Preparing to type string: {text}")
         try:
-            self._debug_print(f"Pasting string: {text}")
-            pyautogui.typewrite(text)  # Paste the entire text at once
-            self._debug_print("String pasted successfully")
+            self._debug_print(f"Typing string: {text}")
+            pyautogui.write(text, interval=0.05)  # Add a small delay between characters
+            self._debug_print("String typed successfully")
         except Exception as e:
-            self._debug_print(f"Error pasting string: {str(e)}")
+            self._debug_print(f"Error typing string: {str(e)}")
     def _check_websocket_connection(self):
         try:
             self.ws.ping()
