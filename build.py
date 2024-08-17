@@ -145,6 +145,17 @@ pyinstaller_args = [
 ]
 
 # Run PyInstaller
+try:
+    PyInstaller.__main__.run(pyinstaller_args)
+    print("Build completed successfully.")
+except Exception as e:
+    print(f"Error building executable: {e}")
+    print("Full traceback:")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+
+# Run PyInstaller
 PyInstaller.__main__.run(pyinstaller_args)
 
 # Clean up temporary file
