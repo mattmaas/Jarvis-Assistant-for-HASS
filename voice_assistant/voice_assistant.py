@@ -41,11 +41,7 @@ class JarvisAssistant:
         self.ping_interval = 50  # Send a ping every 50 seconds
         self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
         
-        # Import and start the Flask server in a separate thread
-        from api_server import run_flask_server, init_assistant
-        init_assistant(self)
-        self.flask_thread = threading.Thread(target=run_flask_server, daemon=True)
-        self.flask_thread.start()
+        # Remove Flask server initialization
 
     def _load_wake_words(self):
         try:
@@ -354,7 +350,10 @@ class JarvisAssistant:
             "pipeline": pipeline_id,
             "id": self.message_id
         }
-        self._send_websocket_message(message)
+        try:
+            self._send_websocket_message(message)
+        except Exception as e:
+            self._debug_print(f"Error sending confirmation to Home Assistant: {str(e)}")
 
     def _launch_file(self, filename: str):
         try:
