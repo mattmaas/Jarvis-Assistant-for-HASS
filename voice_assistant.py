@@ -42,6 +42,7 @@ class JarvisAssistant:
         self.last_ping_time = 0
         self.ping_interval = 50  # Send a ping every 50 seconds
         self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
+        self.conversation_id = str(uuid.uuid4())  # Generate a unique conversation ID
         
         # Remove Flask server initialization
 
