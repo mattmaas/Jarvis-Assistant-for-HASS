@@ -1,7 +1,4 @@
 import os
-import sys
-import shutil
-import PyInstaller.__main__
 import configparser
 import threading
 import json
@@ -18,52 +15,6 @@ from debug_window import debug_signals
 from openrgb_control import OpenRGBControl
 import pvporcupine
 import re
-
-def build_executable():
-    # Get the directory of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Define the spec file path
-    spec_file = os.path.join(current_dir, "voice_assistant.spec")
-    
-    # Define the output directory as the current directory
-    dist_dir = current_dir
-    
-    # Remove existing build and dist directories
-    for dir_name in ['build', 'dist']:
-        dir_path = os.path.join(current_dir, dir_name)
-        if os.path.exists(dir_path):
-            shutil.rmtree(dir_path)
-    
-    # Create the PyInstaller command
-    pyinstaller_args = [
-        'main.py',
-        '--name=VoiceAssistant',
-        '--onefile',
-        '--windowed',
-        f'--distpath={dist_dir}',
-        '--add-data=icon.png:.',
-        '--add-data=config.ini:.',
-        '--add-data=wakewords.json:.',
-        '--add-data=file_nicknames.json:.',
-        '--icon=icon.ico',
-        '--hidden-import=websocket',
-        '--hidden-import=pvporcupine',
-        '--hidden-import=pyaudio',
-        '--hidden-import=speech_recognition',
-        '--hidden-import=openai',
-        '--hidden-import=requests',
-        '--hidden-import=pyautogui',
-        '--hidden-import=openrgb_control',
-    ]
-    
-    # Run PyInstaller
-    PyInstaller.__main__.run(pyinstaller_args)
-    
-    print("Build process completed.")
-
-if __name__ == "__main__":
-    build_executable()
 class JarvisAssistant:
     def __init__(self, config_path, sensitivity=0.5):
         self.config = configparser.ConfigParser()
