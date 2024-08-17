@@ -16,6 +16,7 @@ from debug_window import debug_signals
 from openrgb_control import OpenRGBControl
 import pvporcupine
 import re
+import threading
 class JarvisAssistant:
     def __init__(self, config_path, sensitivity=0.5):
         self.config = configparser.ConfigParser()
@@ -133,6 +134,7 @@ class JarvisAssistant:
                 self.pa.terminate()
             if self.porcupine:
                 self.porcupine.delete()
+            self.rgb_control.set_profile("ice")  # Ensure 'ice' profile is set when stopping
 
     def _keep_alive(self):
         while self.is_running:
@@ -218,6 +220,8 @@ class JarvisAssistant:
                 recognizer.pause_threshold = 0.8  # Reduced pause threshold for quicker response
                 audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
 
+            self._set_processing_color()  # Set color to orange after listening
+
             try:
                 if self.stt_provider == "google":
                     command = recognizer.recognize_google(audio, show_all=True)
@@ -252,6 +256,8 @@ class JarvisAssistant:
             self._debug_print("No speech detected. Listening for wake word again.")
         except Exception as e:
             self._debug_print(f"An error occurred: {e}")
+        finally:
+            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing
 
     def _select_pipeline(self, text: str) -> str:
         if self.ha_pipeline == "auto":
@@ -277,19 +283,24 @@ class JarvisAssistant:
             self._debug_print("Command contains 'never mind' or 'nevermind'. Not executing command.")
             return
 
-        # Load command phrases
-        with open('command_phrases.json', 'r') as f:
-            command_phrases = json.load(f)
+        self._set_processing_color()  # Set color to orange before processing
 
-        # Check for local commands
-        for cmd_type, phrases in command_phrases.items():
-            if any(phrase in command.lower() for phrase in phrases):
-                self._execute_local_command(cmd_type, command)
-                return
+        try:
+            # Load command phrases
+            with open('command_phrases.json', 'r') as f:
+                command_phrases = json.load(f)
 
-        # If no local command matched, send to Home Assistant
-        pipeline_id = self._select_pipeline(command)
-        self._send_to_home_assistant(command, pipeline_id)
+            # Check for local commands
+            for cmd_type, phrases in command_phrases.items():
+                if any(phrase in command.lower() for phrase in phrases):
+                    self._execute_local_command(cmd_type, command)
+                    return
+
+            # If no local command matched, send to Home Assistant
+            pipeline_id = self._select_pipeline(command)
+            self._send_to_home_assistant(command, pipeline_id)
+        finally:
+            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile after processing
 
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
@@ -642,6 +653,13 @@ class JarvisAssistant:
         formatted_message = f"[{timestamp}] {message}"
         print(formatted_message)
         self.debug_signals.debug_signal.emit(formatted_message)
+
+    def _set_processing_color(self):
+        try:
+            self.rgb_control.set_mic_color((255, 69, 0))  # Set to orange color
+            self._debug_print("Set RGB color to orange (processing)")
+        except Exception as e:
+            self._debug_print(f"Error setting RGB color to orange: {str(e)}")
 
     def _type_string(self, text):
         """
