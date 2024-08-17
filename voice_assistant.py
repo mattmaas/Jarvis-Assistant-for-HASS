@@ -180,8 +180,30 @@ class JarvisAssistant:
 
     def _restart_application(self):
         self._debug_print("Restarting application...")
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+        if getattr(sys, 'frozen', False):
+            # If the application is run as a bundle, use sys.executable
+            # to find the path to the bundled executable
+            executable = sys.executable
+        else:
+            # If running from a Python interpreter, use sys.argv[0]
+            executable = sys.argv[0]
+        
+        self._debug_print(f"Executable path: {executable}")
+        
+        # Stop the current instance
+        self.stop()
+        
+        # Start a new instance
+        try:
+            os.execv(executable, [executable] + sys.argv[1:])
+        except Exception as e:
+            self._debug_print(f"Error restarting application: {str(e)}")
+            # If execv fails, try using subprocess as a fallback
+            import subprocess
+            subprocess.Popen([executable] + sys.argv[1:])
+        
+        # Exit the current instance
+        sys.exit(0)
 
     def _reconnect_to_home_assistant(self):
         max_retries = 5
