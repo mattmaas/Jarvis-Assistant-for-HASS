@@ -278,26 +278,26 @@ class JarvisAssistant:
     def _execute_command(self, command: str):
         self._debug_print(f"Executing command: {command}")
         if "never mind" in command.lower() or "nevermind" in command.lower():
-            self._debug_print("Command contains 'never mind' or 'nevermind'. Not transmitting to assistant.")
+            self._debug_print("Command contains 'never mind' or 'nevermind'. Not executing command.")
             return
-        
+
         # Load command phrases
         with open('command_phrases.json', 'r') as f:
             command_phrases = json.load(f)
-        
+
         # Check for local commands
         for cmd_type, phrases in command_phrases.items():
             if any(phrase in command.lower() for phrase in phrases):
                 self._execute_local_command(cmd_type, command)
                 return
-        
+
         # If no local command matched, send to Home Assistant
         pipeline_id = self._select_pipeline(command)
         self._send_to_home_assistant(command, pipeline_id)
 
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
-        
+
         if cmd_type == "stop_listening":
             self.stop()
             confirmation = "I've stopped listening"
@@ -308,9 +308,9 @@ class JarvisAssistant:
             # Use GPT-4o-mini to extract relevant information for other commands
             prompt = f"Extract the relevant information for the '{cmd_type}' command from this input: {command}"
             extracted_info = self._query_gpt4o_mini(prompt)
-            
+
             if cmd_type == "type_command":
-                self.type_string(extracted_info)
+                self._type_string(extracted_info)
                 confirmation = f"I've typed the text for you: {extracted_info}"
             elif cmd_type == "launch_file":
                 self._launch_file(extracted_info)
@@ -321,11 +321,8 @@ class JarvisAssistant:
                 confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
             else:
                 confirmation = "I'm not sure how to execute that command."
-        
-        if cmd_type != "stop_listening":
-            self._send_confirmation_to_ha(confirmation)
-        else:
-            self._debug_print(confirmation)
+
+        self._send_confirmation_to_ha(confirmation)
 
     def _query_gpt4o_mini(self, prompt: str) -> str:
         try:
@@ -644,7 +641,7 @@ class JarvisAssistant:
         print(formatted_message)
         self.debug_signals.debug_signal.emit(formatted_message)
 
-    def type_string(self, text):
+    def _type_string(self, text):
         """
         Types the given string using pyautogui after a 3-second delay.
         """
@@ -657,13 +654,6 @@ class JarvisAssistant:
             self._debug_print("String typed successfully")
         except Exception as e:
             self._debug_print(f"Error typing string: {str(e)}")
-
-    def handle_home_assistant_command(self, command, args):
-        """
-        Handles commands received from Home Assistant.
-        """
-        self._debug_print(f"Received command from Home Assistant: {command}")
-        self._execute_command(f"{command} {args}")
     def _check_websocket_connection(self):
         try:
             self.ws.ping()
