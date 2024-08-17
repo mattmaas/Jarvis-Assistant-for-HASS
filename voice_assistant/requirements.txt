@@ -8,4 +8,5 @@ openai==0.27.0
 websocket-client==1.3.2
 pywinusb==0.4.2
 pyautogui==0.9.53
-openrgb-pythonflask
+openrgb-python
+flask
