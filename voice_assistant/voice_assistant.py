@@ -68,6 +68,7 @@ class JarvisAssistant:
             threading.Thread(target=self._keep_alive).start()  # Start keep-alive thread
         else:
             self._set_ice_profile()  # Ensure 'ice' profile is set when restarting
+        self._debug_print("Assistant started and listening")
 
     def _set_ice_profile(self):
         max_retries = 3
@@ -101,6 +102,7 @@ class JarvisAssistant:
             self._debug_print(f"Error setting RGB color: {str(e)}")
         
         self._debug_print("Assistant stopped")
+        # Remove the line that sets the profile back to 'ice'
 
     def _run(self):
         try:
