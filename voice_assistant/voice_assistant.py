@@ -102,7 +102,6 @@ class JarvisAssistant:
             self._debug_print(f"Error setting RGB color: {str(e)}")
         
         self._debug_print("Assistant stopped")
-        # Remove the line that sets the profile back to 'ice'
 
     def _run(self):
         try:
@@ -353,6 +352,10 @@ class JarvisAssistant:
             return ""
 
     def _send_confirmation_to_ha(self, confirmation: str):
+        if not self.is_running:
+            self._debug_print("Assistant is stopped. Skipping confirmation to Home Assistant.")
+            return
+
         pipeline_id = self._select_pipeline("confirmation")
         message = {
             "type": "assist_pipeline/run",
@@ -368,6 +371,16 @@ class JarvisAssistant:
             self._send_websocket_message(message)
         except Exception as e:
             self._debug_print(f"Error sending confirmation to Home Assistant: {str(e)}")
+            if "NoneType" in str(e):
+                self._debug_print("WebSocket connection is not available. Attempting to reconnect...")
+                if self._reconnect_to_home_assistant():
+                    self._debug_print("Reconnected successfully. Retrying confirmation...")
+                    try:
+                        self._send_websocket_message(message)
+                    except Exception as retry_e:
+                        self._debug_print(f"Failed to send confirmation after reconnection: {str(retry_e)}")
+                else:
+                    self._debug_print("Failed to reconnect to Home Assistant.")
 
     def _launch_file(self, filename: str):
         try:
