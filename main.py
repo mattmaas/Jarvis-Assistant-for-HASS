@@ -176,7 +176,7 @@ def main():
 
     # Connect menu actions
     start_action.triggered.connect(assistant.start)
-    stop_action.triggered.connect(assistant.stop)  # The orange color is now set in the stop() method
+    stop_action.triggered.connect(assistant.stop)
     debug_action.triggered.connect(debug_window.show)
     def restart_assistant():
         global assistant
