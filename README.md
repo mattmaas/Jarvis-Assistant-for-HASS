@@ -114,6 +114,16 @@ The `config.ini` file allows you to customize various aspects of Jarvis. Here's 
 
 Ensure all API keys and tokens are kept secret and not shared publicly. Adjust these settings according to your specific setup and preferences.
 
+## Auto Interpreter Mode for Voice Pipelines
+
+Jarvis now starts in auto interpreter mode by default for voice pipelines. This intelligent feature automatically selects the most appropriate pipeline based on the content of your voice command. Here's how it works:
+
+1. When you give a voice command, Jarvis analyzes the content of your speech.
+2. Based on keywords and context, it selects the most suitable Home Assistant Assist pipeline to process your request.
+3. This allows for more flexible and context-aware responses, as different pipelines can be optimized for various types of commands (e.g., smart home control, information queries, or complex tasks).
+
+You can still manually select a specific pipeline if needed, but the auto interpreter mode ensures that Jarvis adapts to your diverse needs without requiring explicit pipeline selection for each command.
+
 ## Usage
 
 Once Jarvis is running:

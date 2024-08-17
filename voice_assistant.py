@@ -31,7 +31,7 @@ class JarvisAssistant:
         self.stt_provider = self.config['STT']['PROVIDER']
         self.ha_url = self.config['HOME_ASSISTANT']['URL']
         self.ha_token = self.config['HOME_ASSISTANT']['ACCESS_TOKEN']
-        self.ha_pipeline = "jarvis_en"  # Set default pipeline
+        self.ha_pipeline = "auto"  # Set default pipeline to auto interpreter mode
         self.ws = None
         self.message_id = 0  # Initialize message ID counter
         self.ws_lock = threading.Lock()  # Add a lock for thread-safe WebSocket operations
