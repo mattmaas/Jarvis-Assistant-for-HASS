@@ -12,3 +12,14 @@ openrgb-python==0.7.1
 flask==2.2.3
 configparser==5.3.0
 requests==2.26.0
+PyQt5
+websocket-client
+pvporcupine
+pyaudio
+SpeechRecognition
+openai
+requests
+pyautogui
+numpy
+torch
+numba
