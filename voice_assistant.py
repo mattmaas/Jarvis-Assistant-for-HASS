@@ -263,8 +263,9 @@ class JarvisAssistant:
         except Exception as e:
             self._debug_print(f"An error occurred: {e}")
         finally:
-            # Remove setting 'ice' profile here
-            pass
+            if self.is_running:
+                self.rgb_control.set_profile("ice")  # Always set back to 'ice' profile after processing
+                self._debug_print("Set RGB profile back to 'ice'")
 
     def _select_pipeline(self, text: str) -> str:
         if self.ha_pipeline == "auto":
