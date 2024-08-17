@@ -6,6 +6,7 @@ pyaudio==0.2.13
 jaraco.text==3.7.0
 openai==0.27.0
 websocket-client==1.3.2
+websocket-client
 pywinusb==0.4.2
 pyautogui==0.9.53
 openrgb-python==0.7.1

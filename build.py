@@ -50,6 +50,7 @@ def build_executable():
         '--add-data=wakewords.json:.',
         '--add-data=file_nicknames.json:.',
         '--hidden-import=websocket',
+        '--hidden-import=websocket-client',
         '--hidden-import=pvporcupine',
         '--hidden-import=pyaudio',
         '--hidden-import=speech_recognition',
