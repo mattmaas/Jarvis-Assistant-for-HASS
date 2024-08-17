@@ -6,7 +6,7 @@ Welcome to Jarvis, the cutting-edge voice assistant that revolutionizes your sma
 
 Jarvis isn't just another voice assistant – it's your personal AI-powered home conductor. With the simple wake word "Jarvis," you unlock a world of possibilities:
 
-- **Effortless Smart Home Control**: Command your entire smart home ecosystem with natural language. From adjusting lights to setting the perfect temperature, Jarvis understands and executes your wishes instantly.
+- **Effortless Smart Home Control**: Command your entire smart home ecosystem with natural language. From adjusting lights to setting the perfect temperature, Jarvis understands and executes your wishes instantly. Leveraging the full power of Home Assistant's vast ecosystem, Jarvis seamlessly integrates with Home Assistant's Assist pipelines, allowing for complex automations and interactions with all your smart devices.
 
 - **Stunning RGB Lighting Effects**: Transform your space with vibrant, mood-enhancing lighting. Jarvis's OpenRGB integration lets you create the perfect ambiance for any occasion, all with a simple voice command.
 
