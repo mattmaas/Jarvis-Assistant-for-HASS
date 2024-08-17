@@ -190,7 +190,7 @@ class JarvisAssistant:
                     }
                     self.ws.send(json.dumps(ping_message))
                     self._debug_print(f"Sent ping (ID: {self.message_id})")
-                    
+
                     # Wait for pong response
                     self.ws.settimeout(10)  # Set a 10-second timeout for the response
                     response = json.loads(self.ws.recv())
@@ -202,8 +202,16 @@ class JarvisAssistant:
                         return False
                 except Exception as e:
                     self._debug_print(f"Error sending ping: {str(e)}")
+                    if "EOF occurred in violation of protocol" in str(e):
+                        self._debug_print("Critical error detected. Initiating application restart.")
+                        self._restart_application()
                     return False
             return False
+
+    def _restart_application(self):
+        self._debug_print("Restarting application...")
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
     def _reconnect_to_home_assistant(self):
         max_retries = 5
