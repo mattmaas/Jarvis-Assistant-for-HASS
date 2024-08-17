@@ -303,8 +303,8 @@ class JarvisAssistant:
         else:
             # Use GPT-4o-mini to process the command
             if cmd_type == "type_command":
-                prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. If the input suggests creating content, generate that content directly."
-                extracted_info = self._query_gpt4o_mini(prompt)
+                prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. If the input suggests creating content, generate that content directly. Aim for a response of up to 1000 characters."
+                extracted_info = self._query_gpt4o_mini(prompt, max_tokens=1000)
                 self._type_string(extracted_info)
                 confirmation = f"I've typed the text for you"
             elif cmd_type == "launch_file":
@@ -323,7 +323,7 @@ class JarvisAssistant:
 
         self._send_confirmation_to_ha(confirmation)
 
-    def _query_gpt4o_mini(self, prompt: str) -> str:
+    def _query_gpt4o_mini(self, prompt: str, max_tokens: int = 50) -> str:
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
@@ -331,7 +331,7 @@ class JarvisAssistant:
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=50,
+                max_tokens=max_tokens,
                 n=1,
                 stop=None,
                 temperature=0.5,
