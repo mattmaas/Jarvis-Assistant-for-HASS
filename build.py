@@ -24,16 +24,18 @@ def build_executable():
     
     # Add missing DLLs
     conda_path = os.path.dirname(sys.executable)
-    openblas_dll = os.path.join(conda_path, 'Library', 'bin', 'libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll')
-    tbb_dll = os.path.join(conda_path, 'Library', 'bin', 'tbb12.dll')
-    api_ms_win_crt_heap_dll = os.path.join(conda_path, 'Library', 'bin', 'api-ms-win-crt-heap-l1-1-0.dll')
-
+    dll_names = [
+        'libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll',
+        'tbb12.dll',
+        'api-ms-win-crt-heap-l1-1-0.dll'
+    ]
     dll_args = []
-    for dll in [openblas_dll, tbb_dll, api_ms_win_crt_heap_dll]:
-        if os.path.exists(dll):
-            dll_args.append(f'--add-data={dll};.')
+    for dll_name in dll_names:
+        dll_path = os.path.join(conda_path, 'Library', 'bin', dll_name)
+        if os.path.exists(dll_path):
+            dll_args.append(f'--add-data={dll_path};.')
         else:
-            print(f"Warning: {dll} not found. This may cause issues.")
+            print(f"Warning: {dll_name} not found. This may cause issues.")
 
     # Create the PyInstaller command
     pyinstaller_args = [
@@ -119,7 +121,7 @@ pyinstaller_args = [
     f'--add-data=config.ini{separator}.',
     f'--add-data=wakewords.json{separator}.',
     f'--add-data=file_nicknames.json{separator}.',
-    '--add-binary=C:\\Users\\Matt\\AppData\\Local\\Programs\\Miniconda3\\Library\\bin\\libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll;.',
+    *dll_args,  # Add the DLL arguments dynamically
     '--icon=icon.ico',
     '--hidden-import=websocket',
     '--hidden-import=pvporcupine',
