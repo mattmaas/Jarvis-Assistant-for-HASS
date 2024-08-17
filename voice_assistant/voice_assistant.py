@@ -645,12 +645,10 @@ class JarvisAssistant:
 
     def _type_string(self, text):
         """
-        Types the given string using pyautogui after a 3-second delay.
+        Types the given string using pyautogui.
         """
         self._debug_print(f"Preparing to type string: {text}")
         try:
-            self._debug_print("Waiting for 3 seconds before typing...")
-            time.sleep(3)
             self._debug_print(f"Typing string: {text}")
             pyautogui.write(text, interval=0.05)  # Add a small delay between characters
             self._debug_print("String typed successfully")
