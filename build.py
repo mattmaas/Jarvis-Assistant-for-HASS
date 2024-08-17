@@ -108,6 +108,21 @@ with open('embedded_data.py', 'w') as f:
     f.write(f"WAKEWORDS = {json.dumps(wakewords)}\n")
     f.write(f"FILE_NICKNAMES = {json.dumps(file_nicknames)}\n")
 
+# Add missing DLLs
+conda_path = os.path.dirname(sys.executable)
+dll_names = [
+    'libopenblas64__v0.3.23-293-gc2f4bdbb-gcc_10_3_0-2bde3a66a51006b2b53eb373ff767a3f.dll',
+    'tbb12.dll',
+    'api-ms-win-crt-heap-l1-1-0.dll'
+]
+dll_args = []
+for dll_name in dll_names:
+    dll_path = os.path.join(conda_path, 'Library', 'bin', dll_name)
+    if os.path.exists(dll_path):
+        dll_args.append(f'--add-data={dll_path};.')
+    else:
+        print(f"Warning: {dll_name} not found. This may cause issues.")
+
 # PyInstaller command
 separator = ';' if sys.platform.startswith('win') else ':'
 pyinstaller_args = [
