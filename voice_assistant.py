@@ -17,6 +17,7 @@ from openrgb_control import OpenRGBControl
 import pvporcupine
 import re
 import threading
+import uuid
 class JarvisAssistant:
     def __init__(self, config_path):
         self.config = configparser.ConfigParser()
@@ -356,6 +357,7 @@ class JarvisAssistant:
                 n=1,
                 stop=None,
                 temperature=0.5,
+                user=self.conversation_id  # Pass the conversation ID here
             )
             return response.choices[0].message['content'].strip()
         except Exception as e:
