@@ -91,6 +91,7 @@ if __name__ == "__main__":
 import PyInstaller.__main__
 import os
 import json
+import sys
 
 def read_json_file(file_path):
     with open(file_path, 'r') as f:
@@ -106,15 +107,41 @@ with open('embedded_data.py', 'w') as f:
     f.write(f"FILE_NICKNAMES = {json.dumps(file_nicknames)}\n")
 
 # PyInstaller command
+separator = ';' if sys.platform.startswith('win') else ':'
 pyinstaller_args = [
     'main.py',
     '--name=JarvisAssistant',
     '--onefile',
     '--windowed',
-    '--add-data=icon.png:.',
-    '--add-data=icon.ico:.',
-    '--add-data=embedded_data.py:.',
-    '--icon=icon.ico'
+    f'--add-data=icon.png{separator}.',
+    f'--add-data=icon.ico{separator}.',
+    f'--add-data=embedded_data.py{separator}.',
+    f'--add-data=config.ini{separator}.',
+    f'--add-data=wakewords.json{separator}.',
+    f'--add-data=file_nicknames.json{separator}.',
+    '--icon=icon.ico',
+    '--hidden-import=websocket',
+    '--hidden-import=pvporcupine',
+    '--hidden-import=pyaudio',
+    '--hidden-import=speech_recognition',
+    '--hidden-import=openai',
+    '--hidden-import=requests',
+    '--hidden-import=pyautogui',
+    '--hidden-import=openrgb_control',
+    '--hidden-import=numpy',
+    '--hidden-import=torch',
+    '--hidden-import=numba',
+    '--hidden-import=importlib_resources',
+    '--hidden-import=pkg_resources',
+    '--hidden-import=sip',
+    '--collect-all=pvporcupine',
+    '--collect-all=pyaudio',
+    '--collect-all=jaraco.text',
+    '--collect-all=numpy',
+    '--collect-all=torch',
+    '--collect-all=numba',
+    '--clean',
+    '--log-level=DEBUG',
 ]
 
 # Run PyInstaller
