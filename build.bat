@@ -9,11 +9,15 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM Create and activate a virtual environment
-if not exist "venv" (
-    echo Creating virtual environment...
-    python -m venv venv
+REM Remove existing virtual environment
+if exist "venv" (
+    echo Removing existing virtual environment...
+    rmdir /s /q venv
 )
+
+REM Create and activate a new virtual environment
+echo Creating new virtual environment...
+python -m venv venv
 call venv\Scripts\activate
 
 REM Install required packages
