@@ -14,5 +14,13 @@
     "add file nickname",
     "create file shortcut",
     "set file alias"
+  ],
+  "stop_listening": [
+    "stop listening",
+    "pause listening"
+  ],
+  "start_listening": [
+    "start listening",
+    "resume listening"
   ]
 }

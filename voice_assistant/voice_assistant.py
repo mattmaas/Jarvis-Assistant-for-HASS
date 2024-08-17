@@ -269,6 +269,16 @@ class JarvisAssistant:
             self._debug_print("Command contains 'never mind' or 'nevermind'. Not transmitting to assistant.")
             return
         
+        # Check for stop and start listening commands
+        if any(phrase in command.lower() for phrase in ["stop listening", "pause listening"]):
+            self.stop()
+            self._debug_print("Stopped listening")
+            return
+        elif any(phrase in command.lower() for phrase in ["start listening", "resume listening"]):
+            self.start()
+            self._debug_print("Started listening")
+            return
+        
         # Load command phrases
         with open('command_phrases.json', 'r') as f:
             command_phrases = json.load(f)
