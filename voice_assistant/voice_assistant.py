@@ -176,7 +176,8 @@ class JarvisAssistant:
     def _keep_alive(self):
         while self.is_running:
             time.sleep(50)  # Send a ping every 50 seconds
-            self._send_ping()
+            if not self._send_ping():
+                self._reconnect_to_home_assistant()
 
     def _send_ping(self):
         with self.ws_lock:
@@ -189,9 +190,39 @@ class JarvisAssistant:
                     }
                     self.ws.send(json.dumps(ping_message))
                     self._debug_print(f"Sent ping (ID: {self.message_id})")
+                    
+                    # Wait for pong response
+                    self.ws.settimeout(10)  # Set a 10-second timeout for the response
+                    response = json.loads(self.ws.recv())
+                    if response.get("type") == "pong":
+                        self._debug_print(f"Received pong (ID: {response.get('id')})")
+                        return True
+                    else:
+                        self._debug_print(f"Unexpected response to ping: {response}")
+                        return False
                 except Exception as e:
                     self._debug_print(f"Error sending ping: {str(e)}")
-                    self._reconnect_to_home_assistant()
+                    return False
+            return False
+
+    def _reconnect_to_home_assistant(self):
+        max_retries = 5
+        retry_delay = 60  # 1 minute between retries
+
+        for attempt in range(max_retries):
+            self._debug_print(f"Attempting to reconnect to Home Assistant (Attempt {attempt + 1}/{max_retries})")
+            self._disconnect_from_home_assistant()
+            
+            if self._connect_to_home_assistant():
+                self._debug_print("Successfully reconnected to Home Assistant")
+                return True
+            
+            if attempt < max_retries - 1:
+                self._debug_print(f"Reconnection failed. Waiting {retry_delay} seconds before next attempt...")
+                time.sleep(retry_delay)
+
+        self._debug_print("Failed to reconnect after multiple attempts. Please check your network connection and Home Assistant status.")
+        return False
 
     def _reconnect_to_home_assistant(self):
         self._debug_print("Attempting to reconnect to Home Assistant...")
