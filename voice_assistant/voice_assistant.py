@@ -301,17 +301,20 @@ class JarvisAssistant:
             self.start()
             confirmation = "I've started listening"
         else:
-            # Use GPT-4o-mini to extract relevant information for other commands
-            prompt = f"Extract the relevant information for the '{cmd_type}' command from this input: {command}"
-            extracted_info = self._query_gpt4o_mini(prompt)
-
+            # Use GPT-4o-mini to process the command
             if cmd_type == "type_command":
+                prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. If the input suggests creating content, generate that content directly."
+                extracted_info = self._query_gpt4o_mini(prompt)
                 self._type_string(extracted_info)
-                confirmation = f"I've typed the text for you: {extracted_info}"
+                confirmation = f"I've typed the text for you"
             elif cmd_type == "launch_file":
+                prompt = f"Extract only the file or program name to be launched from this input: {command}"
+                extracted_info = self._query_gpt4o_mini(prompt)
                 self._launch_file(extracted_info)
                 confirmation = f"I've launched the file or program: {extracted_info}"
             elif cmd_type == "add_file_nickname":
+                prompt = f"Extract the nickname and filename from this input: {command}. Return them separated by a comma, without any additional text."
+                extracted_info = self._query_gpt4o_mini(prompt)
                 nickname, filename = extracted_info.split(',')
                 self._add_file_nickname(nickname.strip(), filename.strip())
                 confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
