@@ -108,7 +108,7 @@ def main():
                         ha_menu.addAction(action)
                     
                     # Set default pipeline to "Auto" or the preferred pipeline
-                    default_pipeline = preferred_pipeline if preferred_pipeline else "auto"
+                    default_pipeline = "auto"
                     set_ha_pipeline(default_pipeline)
                     debug_signals.debug_signal.emit(f"Set default pipeline: {default_pipeline}")
                 else:
