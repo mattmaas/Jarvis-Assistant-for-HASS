@@ -20,6 +20,7 @@ import re
 import threading
 import uuid
 import random
+
 class JarvisAssistant:
     def __init__(self, config_path, logger):
         self.config = configparser.ConfigParser()
@@ -50,11 +51,15 @@ class JarvisAssistant:
         self.max_reconnect_attempts = 5
         self.base_reconnect_delay = 60  # Base delay of 1 minute
         
+        # Get the directory of the current script
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        
         # Remove Flask server initialization
 
     def _load_wake_words(self):
         try:
-            with open('wakewords.json', 'r') as f:
+            wakewords_path = os.path.join(self.script_dir, 'wakewords.json')
+            with open(wakewords_path, 'r') as f:
                 wake_words = json.load(f)
             if not isinstance(wake_words, dict):
                 raise ValueError("Loaded JSON is not a dictionary")
