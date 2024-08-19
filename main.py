@@ -4,6 +4,7 @@ import websocket
 import json
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QActionGroup
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QTimer
 from voice_assistant import JarvisAssistant
 from debug_window import DebugWindow, debug_signals
 from modern_ui import ModernUI, conversation_signals
@@ -22,6 +23,19 @@ CONFIG_PATH = os.path.join(current_dir, 'config.ini')
 logging.basicConfig(filename='jarvis_assistant.log', level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+class AssistantThread(threading.Thread):
+    def __init__(self, assistant):
+        threading.Thread.__init__(self)
+        self.assistant = assistant
+        self.daemon = True
+
+    def run(self):
+        try:
+            self.assistant.start()
+        except Exception as e:
+            logger.error(f"Error in assistant thread: {e}")
+            debug_signals.debug_signal.emit(f"Error in assistant thread: {e}")
 
 def main():
     global assistant, modern_ui
@@ -191,8 +205,8 @@ def main():
             disable_startup_action.setChecked(True)
 
     # Connect menu actions
-    start_action.triggered.connect(assistant.start)
-    stop_action.triggered.connect(assistant.stop)
+    start_action.triggered.connect(lambda: QTimer.singleShot(0, assistant.start))
+    stop_action.triggered.connect(lambda: QTimer.singleShot(0, assistant.stop))
     debug_action.triggered.connect(debug_window.show)
     def restart_assistant():
         global assistant
@@ -201,7 +215,8 @@ def main():
         time.sleep(1)  # Give some time for the assistant to stop
         assistant = JarvisAssistant(CONFIG_PATH, sensitivity=0.7)  # Create a new instance
         update_ha_pipelines()  # Update pipelines after creating new instance
-        assistant.start()
+        assistant_thread = AssistantThread(assistant)
+        assistant_thread.start()
         debug_signals.debug_signal.emit("Assistant restarted")
 
     restart_action.triggered.connect(restart_assistant)
@@ -213,8 +228,7 @@ def main():
     tray.show()
     
     # Start the voice assistant in a separate thread
-    assistant_thread = threading.Thread(target=assistant.start)
-    assistant_thread.daemon = True
+    assistant_thread = AssistantThread(assistant)
     assistant_thread.start()
     
     # Enable tray icon double-click to show/hide main window
