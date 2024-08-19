@@ -514,6 +514,14 @@ class JarvisAssistant:
                                 self._debug_print(f"Received response for a different message ID: {response.get('id')}")
                                 continue
 
+                            if response.get("type") == "event" and response.get("event", {}).get("type") == "intent-end":
+                                speech = response.get("event", {}).get("data", {}).get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                                if speech:
+                                    self._debug_print(f"Extracted speech from raw response: {speech}")
+                                    response_text = speech
+                                    conversation_signals.update_signal.emit(response_text, False)
+                                    self._debug_print(f"Jarvis response: {response_text}")
+
                             if response.get("type") == "result":
                                 if not response.get("success"):
                                     error = response.get("error", {})
