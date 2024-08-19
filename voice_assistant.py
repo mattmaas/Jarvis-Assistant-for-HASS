@@ -34,6 +34,7 @@ class JarvisAssistant:
         self.audio_stream = None
         self.is_running = False
         self.debug_signals = debug_signals
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
         openai.api_key = self.config['OPENAI']['API_KEY']
         self.stt_provider = self.config['STT']['PROVIDER']
         self.ha_url = self.config['HOME_ASSISTANT']['URL']
@@ -339,7 +340,8 @@ class JarvisAssistant:
 
         try:
             # Load command phrases
-            with open('command_phrases.json', 'r') as f:
+            command_phrases_path = os.path.join(self.script_dir, 'command_phrases.json')
+            with open(command_phrases_path, 'r') as f:
                 command_phrases = json.load(f)
 
             # Check for local commands
@@ -355,7 +357,7 @@ class JarvisAssistant:
             response = self._send_to_home_assistant(command, pipeline_id)
             if response:
                 self._debug_print(f"Home Assistant response: {response}")
-                # The response is already emitted in _send_to_home_assistant, so we don't need to emit it here
+                conversation_signals.update_signal.emit(response, False)  # Emit the response
             else:
                 fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
                 self._debug_print(f"Fallback response: {fallback_response}")
