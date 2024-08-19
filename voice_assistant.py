@@ -353,6 +353,10 @@ class JarvisAssistant:
                 fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
                 self._debug_print(f"Fallback response: {fallback_response}")
                 conversation_signals.update_signal.emit(fallback_response, False)
+        except Exception as e:
+            error_message = f"Error executing command: {str(e)}"
+            self._debug_print(error_message)
+            conversation_signals.update_signal.emit(error_message, False)  # Update ModernUI with error message
         finally:
             if self.is_running:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
@@ -469,8 +473,7 @@ class JarvisAssistant:
                         self._debug_print(f"WebSocket not connected. Attempting to reconnect... (Attempt {attempt + 1}/{max_retries})")
                         if not self._connect_to_home_assistant():
                             if attempt == max_retries - 1:
-                                self._debug_print("Failed to establish WebSocket connection after all attempts. Cannot send command.")
-                                return None
+                                return "Failed to establish WebSocket connection. Please try again later."
                             time.sleep(retry_delay)
                             continue
 
@@ -499,8 +502,7 @@ class JarvisAssistant:
                     
                     while True:
                         if time.time() - start_time > timeout:
-                            self._debug_print(f"Timeout waiting for response from Home Assistant (ID: {current_message_id})")
-                            break
+                            return "Timeout waiting for response from Home Assistant. Please try again."
 
                         try:
                             response_raw = self.ws.recv()
@@ -520,7 +522,7 @@ class JarvisAssistant:
                                     if new_pipeline_id:
                                         self._debug_print(f"Retrying with new pipeline ID: {new_pipeline_id}")
                                         return self._send_to_home_assistant(command, new_pipeline_id)
-                                    break
+                                    return f"Error from Home Assistant: {error_message}"
                                 final_result_received = True
 
                             elif response.get("type") == "event":
@@ -550,7 +552,7 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
-                                return response_text
+                                return response_text if response_text else "Command processed successfully, but no response text was received."
 
                         except websocket.WebSocketException as e:
                             self._debug_print(f"WebSocket error while receiving: {str(e)}")
@@ -570,8 +572,7 @@ class JarvisAssistant:
                 self._debug_print(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
             else:
-                self._debug_print("Failed to send command after all retry attempts")
-                return None
+                return "Failed to send command after multiple attempts. Please try again later."
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
         max_retries = 3
