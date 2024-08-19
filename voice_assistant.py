@@ -521,6 +521,7 @@ class JarvisAssistant:
                                     response_text = speech
                                     conversation_signals.update_signal.emit(response_text, False)
                                     self._debug_print(f"Jarvis response: {response_text}")
+                                    return response_text
 
                             if response.get("type") == "result":
                                 if not response.get("success"):
