@@ -339,6 +339,7 @@ class JarvisAssistant:
             for cmd_type, phrases in command_phrases.items():
                 if any(phrase in command.lower() for phrase in phrases):
                     response = self._execute_local_command(cmd_type, command)
+                    self._debug_print(f"Local command response: {response}")
                     conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
                     return
 
@@ -346,9 +347,11 @@ class JarvisAssistant:
             pipeline_id = self._select_pipeline(command)
             response = self._send_to_home_assistant(command, pipeline_id)
             if response:
+                self._debug_print(f"Home Assistant response: {response}")
                 conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
             else:
                 fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
+                self._debug_print(f"Fallback response: {fallback_response}")
                 conversation_signals.update_signal.emit(fallback_response, False)
         finally:
             if self.is_running:

@@ -47,10 +47,16 @@ class ModernUI(QMainWindow):
         conversation_signals.update_signal.connect(self.update_conversation)
 
     def update_conversation(self, message, is_user):
+        # Check if the last message is the same as the current one
+        last_message = self.conversation.toPlainText().split('\n')[-1] if self.conversation.toPlainText() else ""
+        if f"{'You' if is_user else 'Jarvis'}: {message}" == last_message:
+            return  # Skip duplicate messages
+
         if is_user:
             self.conversation.append(f'<div style="text-align: right;"><span style="background-color: #DCF8C6; padding: 5px; border-radius: 5px;">You: {message}</span></div>')
         else:
-            self.conversation.append(f'<div style="text-align: left;"><span style="background-color: #E5E5EA; padding: 5px; border-radius: 5px;">Jarvis: {message}</span></div>')
+            if message.strip():  # Only append non-empty Jarvis responses
+                self.conversation.append(f'<div style="text-align: left;"><span style="background-color: #E5E5EA; padding: 5px; border-radius: 5px;">Jarvis: {message}</span></div>')
         self.conversation.verticalScrollBar().setValue(self.conversation.verticalScrollBar().maximum())
 
     def closeEvent(self, event):
