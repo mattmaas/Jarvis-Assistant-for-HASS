@@ -21,9 +21,10 @@ import threading
 import uuid
 import random
 class JarvisAssistant:
-    def __init__(self, config_path):
+    def __init__(self, config_path, logger):
         self.config = configparser.ConfigParser()
         self.config.read(config_path)
+        self.logger = logger
         self.access_key = self.config['PORCUPINE']['ACCESS_KEY']
         self.sensitivity = float(self.config['PORCUPINE'].get('SENSITIVITY', '0.5'))
         self.porcupine = None
@@ -713,8 +714,8 @@ class JarvisAssistant:
             self._debug_print(f"Error playing chime: {str(e)}")
 
     def _debug_print(self, message):
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        formatted_message = f"[{timestamp}] {message}"
+        self.logger.debug(message)
+        formatted_message = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] {message}"
         print(formatted_message)
         self.debug_signals.debug_signal.emit(formatted_message)
 

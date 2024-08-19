@@ -10,6 +10,7 @@ from modern_ui import ModernUI, conversation_signals
 import os
 import winreg
 import time
+import logging
 
 # Get the directory of the current script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,12 +18,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Define the path to the config.ini file
 CONFIG_PATH = os.path.join(current_dir, 'config.ini')
 
+# Configure logging
+logging.basicConfig(filename='jarvis_assistant.log', level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 def main():
     global assistant, modern_ui
     app = QApplication(sys.argv)
     
     # Create the Jarvis assistant with the config path and increased sensitivity
-    assistant = JarvisAssistant(CONFIG_PATH)
+    assistant = JarvisAssistant(CONFIG_PATH, logger)
     
     # Create the debug window
     debug_window = DebugWindow()
