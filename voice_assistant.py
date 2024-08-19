@@ -32,6 +32,7 @@ class JarvisAssistant:
         self.pa = None
         self.audio_stream = None
         self.is_running = False
+        self.debug_signals = debug_signals
         openai.api_key = self.config['OPENAI']['API_KEY']
         self.stt_provider = self.config['STT']['PROVIDER']
         self.ha_url = self.config['HOME_ASSISTANT']['URL']
