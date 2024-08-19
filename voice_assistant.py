@@ -18,6 +18,7 @@ import pvporcupine
 import re
 import threading
 import uuid
+import random
 class JarvisAssistant:
     def __init__(self, config_path):
         self.config = configparser.ConfigParser()
@@ -43,6 +44,9 @@ class JarvisAssistant:
         self.ping_interval = 50  # Send a ping every 50 seconds
         self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
         self.conversation_id = str(uuid.uuid4())  # Generate a unique conversation ID
+        self.reconnect_attempts = 0
+        self.max_reconnect_attempts = 5
+        self.base_reconnect_delay = 60  # Base delay of 1 minute
         
         # Remove Flask server initialization
 
@@ -145,7 +149,7 @@ class JarvisAssistant:
 
     def _keep_alive(self):
         while self.is_running:
-            time.sleep(50)  # Send a ping every 50 seconds
+            time.sleep(self.ping_interval)
             if not self._send_ping():
                 self._reconnect_to_home_assistant()
 
@@ -166,26 +170,21 @@ class JarvisAssistant:
                     response = json.loads(self.ws.recv())
                     if response.get("type") == "pong":
                         self._debug_print(f"Received pong (ID: {response.get('id')})")
+                        self.reconnect_attempts = 0  # Reset reconnect attempts on successful ping
                         return True
                     else:
                         self._debug_print(f"Unexpected response to ping: {response}")
                         return False
                 except Exception as e:
                     self._debug_print(f"Error sending ping: {str(e)}")
-                    if "EOF occurred in violation of protocol" in str(e):
-                        self._debug_print("Critical error detected. Initiating application restart.")
-                        self._restart_application()
                     return False
             return False
 
     def _restart_application(self):
         self._debug_print("Restarting application...")
         if getattr(sys, 'frozen', False):
-            # If the application is run as a bundle, use sys.executable
-            # to find the path to the bundled executable
             executable = sys.executable
         else:
-            # If running from a Python interpreter, use sys.argv[0]
             executable = sys.argv[0]
         
         self._debug_print(f"Executable path: {executable}")
@@ -198,36 +197,41 @@ class JarvisAssistant:
             os.execv(executable, [executable] + sys.argv[1:])
         except Exception as e:
             self._debug_print(f"Error restarting application: {str(e)}")
-            # If execv fails, try using subprocess as a fallback
             import subprocess
             subprocess.Popen([executable] + sys.argv[1:])
         
         # Exit the current instance
         sys.exit(0)
 
-    def _reconnect_to_home_assistant(self):
-        max_retries = 5
-        retry_delay = 60  # 1 minute between retries
-
-        for attempt in range(max_retries):
-            self._debug_print(f"Attempting to reconnect to Home Assistant (Attempt {attempt + 1}/{max_retries})")
-            self._disconnect_from_home_assistant()
-            
-            if self._connect_to_home_assistant():
-                self._debug_print("Successfully reconnected to Home Assistant")
-                return True
-            
-            if attempt < max_retries - 1:
-                self._debug_print(f"Reconnection failed. Waiting {retry_delay} seconds before next attempt...")
-                time.sleep(retry_delay)
-
-        self._debug_print("Failed to reconnect after multiple attempts. Please check your network connection and Home Assistant status.")
-        return False
+    def _handle_critical_error(self, error_message):
+        self._debug_print(f"Critical error detected: {error_message}")
+        self._debug_print("Initiating application restart.")
+        self._restart_application()
 
     def _reconnect_to_home_assistant(self):
-        self._debug_print("Attempting to reconnect to Home Assistant...")
+        self.reconnect_attempts += 1
+        if self.reconnect_attempts > self.max_reconnect_attempts:
+            self._debug_print("Max reconnection attempts reached. Restarting application...")
+            self._restart_application()
+            return False
+
+        retry_delay = self.base_reconnect_delay * (2 ** (self.reconnect_attempts - 1))
+        retry_delay = min(retry_delay, 3600)  # Cap at 1 hour
+        jitter = random.uniform(0.8, 1.2)
+        retry_delay = int(retry_delay * jitter)
+
+        self._debug_print(f"Attempting to reconnect to Home Assistant (Attempt {self.reconnect_attempts}/{self.max_reconnect_attempts})")
         self._disconnect_from_home_assistant()
-        self._connect_to_home_assistant()
+        
+        if self._connect_to_home_assistant():
+            self._debug_print("Successfully reconnected to Home Assistant")
+            self.reconnect_attempts = 0
+            return True
+        
+        self._debug_print(f"Reconnection failed. Waiting {retry_delay} seconds before next attempt...")
+        time.sleep(retry_delay)
+
+        return False
 
     def _disconnect_from_home_assistant(self):
         with self.ws_lock:
