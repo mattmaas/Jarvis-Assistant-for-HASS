@@ -552,13 +552,11 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
-                                if response_text:
+                                if not response_text:
+                                    response_text = "Command processed successfully, but no response text was received."
                                     conversation_signals.update_signal.emit(response_text, False)
-                                    self._debug_print(f"Jarvis response: {response_text}")
-                                else:
-                                    conversation_signals.update_signal.emit("Command processed successfully, but no response text was received.", False)
                                     self._debug_print("No response text received from Home Assistant")
-                                return response_text if response_text else "Command processed successfully, but no response text was received."
+                                return response_text
 
                         except websocket.WebSocketException as e:
                             self._debug_print(f"WebSocket error while receiving: {str(e)}")
