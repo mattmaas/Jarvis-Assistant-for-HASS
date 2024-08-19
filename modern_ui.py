@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QTextEdit, QWidget
 from PyQt5.QtGui import QColor, QPalette
-from PyQt5.QtCore import Qt, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QEvent
 
 class ConversationSignals(QObject):
     update_signal = pyqtSignal(str, bool)
@@ -52,6 +52,10 @@ class ModernUI(QMainWindow):
         else:
             self.conversation.append(f'<div style="text-align: left;"><span style="background-color: #E5E5EA; padding: 5px; border-radius: 5px;">Jarvis: {message}</span></div>')
         self.conversation.verticalScrollBar().setValue(self.conversation.verticalScrollBar().maximum())
+
+    def closeEvent(self, event):
+        event.ignore()  # Ignore the close event
+        self.hide()  # Hide the window instead of closing it
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
