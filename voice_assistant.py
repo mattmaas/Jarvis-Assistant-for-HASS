@@ -343,6 +343,8 @@ class JarvisAssistant:
             response = self._send_to_home_assistant(command, pipeline_id)
             if response:
                 conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
+            else:
+                conversation_signals.update_signal.emit("I'm sorry, I couldn't process that command.", False)
         finally:
             if self.is_running:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
@@ -540,7 +542,7 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
-                                return response_text if response_text else "I'm sorry, I couldn't process that command."
+                                return response_text
 
                         except websocket.WebSocketException as e:
                             self._debug_print(f"WebSocket error while receiving: {str(e)}")
