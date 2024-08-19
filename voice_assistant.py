@@ -13,6 +13,7 @@ import openai
 from datetime import datetime
 import pyautogui
 from debug_window import debug_signals
+from debug_window import debug_signals
 from modern_ui import conversation_signals
 from openrgb_control import OpenRGBControl
 import pvporcupine
