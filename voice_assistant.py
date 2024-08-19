@@ -524,7 +524,9 @@ class JarvisAssistant:
                                     if speech:
                                         self._debug_print(f"Extracted speech from intent-end: {speech}")
                                         response_text = speech
-                                        conversation_signals.update_signal.emit(response_text, False)
+                                        conversation_signals.update_signal.emit(command, True)  # Emit user's command
+                                        conversation_signals.update_signal.emit(response_text, False)  # Emit Jarvis's response
+                                        self._debug_print(f"User command: {command}")
                                         self._debug_print(f"Jarvis response: {response_text}")
                                 
                                 elif event_type == "tts-end":
