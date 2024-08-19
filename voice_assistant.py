@@ -169,14 +169,18 @@ class JarvisAssistant:
 
                     # Wait for pong response
                     self.ws.settimeout(10)  # Set a 10-second timeout for the response
-                    response = json.loads(self.ws.recv())
-                    if response.get("type") == "pong":
-                        self._debug_print(f"Received pong (ID: {response.get('id')})")
-                        self.reconnect_attempts = 0  # Reset reconnect attempts on successful ping
-                        return True
-                    else:
-                        self._debug_print(f"Unexpected response to ping: {response}")
-                        return False
+                    while True:
+                        response = json.loads(self.ws.recv())
+                        if response.get("type") == "pong":
+                            self._debug_print(f"Received pong (ID: {response.get('id')})")
+                            self.reconnect_attempts = 0  # Reset reconnect attempts on successful ping
+                            return True
+                        elif response.get("type") == "event":
+                            self._debug_print(f"Received event during ping: {response}")
+                            continue
+                        else:
+                            self._debug_print(f"Unexpected response to ping: {response}")
+                            return False
                 except Exception as e:
                     self._debug_print(f"Error sending ping: {str(e)}")
                     return False
@@ -318,9 +322,9 @@ class JarvisAssistant:
     def _execute_command(self, command: str):
         self._debug_print(f"Executing command: {command}")
         conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
-        if "never mind" in command.lower() or "nevermind" in command.lower() or "be quiet" in command.lower() or "shut up" in command.lower():
-            self._debug_print("Command contains 'never mind' or 'nevermind'. Not executing command.")
-            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile for "never mind"
+        if any(phrase in command.lower() for phrase in ["never mind", "nevermind", "be quiet", "shut up"]):
+            self._debug_print("Command cancelled by user.")
+            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile for cancellation
             conversation_signals.update_signal.emit("Command cancelled.", False)  # Update ModernUI with cancellation
             return
 
@@ -344,7 +348,8 @@ class JarvisAssistant:
             if response:
                 conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
             else:
-                conversation_signals.update_signal.emit("I'm sorry, I couldn't process that command.", False)
+                fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
+                conversation_signals.update_signal.emit(fallback_response, False)
         finally:
             if self.is_running:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
@@ -462,7 +467,7 @@ class JarvisAssistant:
                         if not self._connect_to_home_assistant():
                             if attempt == max_retries - 1:
                                 self._debug_print("Failed to establish WebSocket connection after all attempts. Cannot send command.")
-                                return "Sorry, I'm having trouble connecting to Home Assistant right now."
+                                return None
                             time.sleep(retry_delay)
                             continue
 
@@ -563,7 +568,7 @@ class JarvisAssistant:
                 time.sleep(retry_delay)
             else:
                 self._debug_print("Failed to send command after all retry attempts")
-                return "I'm sorry, but I couldn't process your command due to connection issues with Home Assistant."
+                return None
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
         max_retries = 3
