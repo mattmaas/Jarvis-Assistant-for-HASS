@@ -39,6 +39,9 @@ def main():
     modern_ui = ModernUI()
     modern_ui.hide()  # Initially hide the modern UI
     
+    # Connect the conversation signals to the ModernUI
+    conversation_signals.update_signal.connect(modern_ui.update_conversation)
+    
     # Create the system tray icon
     icon = QIcon("icon.png")  # Make sure to have an icon file
     tray = QSystemTrayIcon(icon)
@@ -49,6 +52,7 @@ def main():
     stop_action = menu.addAction("Stop Listening")
     debug_action = menu.addAction("Show Debug Window")
     modern_ui_action = menu.addAction("Show Conversation")
+    modern_ui_action.triggered.connect(modern_ui.show)
     
     # Create a submenu for Home Assistant pipelines
     ha_menu = QMenu("Home Assistant Pipelines")
