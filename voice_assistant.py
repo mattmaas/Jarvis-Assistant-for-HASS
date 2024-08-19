@@ -514,16 +514,36 @@ class JarvisAssistant:
                                 self._debug_print(f"Received response for a different message ID: {response.get('id')}")
                                 continue
 
-                            if response.get("type") == "event" and response.get("event", {}).get("type") == "intent-end":
-                                speech = response.get("event", {}).get("data", {}).get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
-                                if speech:
-                                    self._debug_print(f"Extracted speech from raw response: {speech}")
-                                    response_text = speech
-                                    conversation_signals.update_signal.emit(response_text, False)
-                                    self._debug_print(f"Jarvis response: {response_text}")
-                                    return response_text
+                            if response.get("type") == "event":
+                                events.append(response)
+                                event_data = response.get("event", {}).get("data", {})
+                                event_type = response.get("event", {}).get("type")
+                                
+                                if event_type == "intent-end":
+                                    speech = event_data.get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                                    if speech:
+                                        self._debug_print(f"Extracted speech from intent-end: {speech}")
+                                        response_text = speech
+                                        conversation_signals.update_signal.emit(response_text, False)
+                                        self._debug_print(f"Jarvis response: {response_text}")
+                                
+                                elif event_type == "tts-end":
+                                    tts_output = event_data.get("tts_output", {})
+                                    tts_url = tts_output.get("url")
+                                    if tts_url:
+                                        self._debug_print(f"Found TTS URL: {tts_url}")
+                                        full_tts_url = f"{self.ha_url}{tts_url}"
+                                        self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
+                                        self._play_audio_on_kitchen_speaker(full_tts_url)
+                                    tts_end_received = True
+                                
+                                elif event_type == "voice_assistant_command":
+                                    command_data = event_data
+                                    command = command_data.get("command")
+                                    args = command_data.get("args")
+                                    self.handle_home_assistant_command(command, args)
 
-                            if response.get("type") == "result":
+                            elif response.get("type") == "result":
                                 if not response.get("success"):
                                     error = response.get("error", {})
                                     error_message = error.get("message", "Unknown error")
@@ -534,38 +554,10 @@ class JarvisAssistant:
                                     return f"Error from Home Assistant: {error_message}"
                                 final_result_received = True
 
-                            elif response.get("type") == "event":
-                                events.append(response)
-                                event_data = response.get("event", {}).get("data", {})
-                                event_type = response.get("event", {}).get("type")
-                                
-                                if event_type == "tts-end":
-                                    tts_output = event_data.get("tts_output", {})
-                                    tts_url = tts_output.get("url")
-                                    response_text = tts_output.get("text", "")
-                                    if tts_url:
-                                        self._debug_print(f"Found TTS URL: {tts_url}")
-                                    if response_text:
-                                        self._debug_print(f"Response text: {response_text}")
-                                    tts_end_received = True
-                                
-                                elif event_type == "voice_assistant_command":
-                                    command_data = event_data
-                                    command = command_data.get("command")
-                                    args = command_data.get("args")
-                                    self.handle_home_assistant_command(command, args)
-
-                            if tts_url and tts_end_received and final_result_received:
-                                self._debug_print("Received TTS URL, TTS end event, and final result. Processing complete.")
+                            if response_text and tts_end_received and final_result_received:
+                                self._debug_print("Received response text, TTS end event, and final result. Processing complete.")
                                 if events:
                                     self._process_events(current_message_id, events)
-                                full_tts_url = f"{self.ha_url}{tts_url}"
-                                self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
-                                self._play_audio_on_kitchen_speaker(full_tts_url)
-                                if not response_text:
-                                    response_text = "Command processed successfully, but no response text was received."
-                                conversation_signals.update_signal.emit(response_text, False)
-                                self._debug_print(f"Jarvis response: {response_text}")
                                 return response_text
 
                         except websocket.WebSocketException as e:
