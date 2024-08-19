@@ -348,7 +348,7 @@ class JarvisAssistant:
             response = self._send_to_home_assistant(command, pipeline_id)
             if response:
                 self._debug_print(f"Home Assistant response: {response}")
-                conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
+                # The response is already emitted in _send_to_home_assistant, so we don't need to emit it here
             else:
                 fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
                 self._debug_print(f"Fallback response: {fallback_response}")
@@ -552,6 +552,12 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
+                                if response_text:
+                                    conversation_signals.update_signal.emit(response_text, False)
+                                    self._debug_print(f"Jarvis response: {response_text}")
+                                else:
+                                    conversation_signals.update_signal.emit("Command processed successfully, but no response text was received.", False)
+                                    self._debug_print("No response text received from Home Assistant")
                                 return response_text if response_text else "Command processed successfully, but no response text was received."
 
                         except websocket.WebSocketException as e:
