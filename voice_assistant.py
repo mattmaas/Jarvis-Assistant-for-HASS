@@ -341,7 +341,8 @@ class JarvisAssistant:
             # If no local command matched, send to Home Assistant
             pipeline_id = self._select_pipeline(command)
             response = self._send_to_home_assistant(command, pipeline_id)
-            conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
+            if response:
+                conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
         finally:
             if self.is_running:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
@@ -523,6 +524,8 @@ class JarvisAssistant:
                                     response_text = tts_output.get("text", "")
                                     if tts_url:
                                         self._debug_print(f"Found TTS URL: {tts_url}")
+                                    if response_text:
+                                        self._debug_print(f"Response text: {response_text}")
                                     tts_end_received = True
                                 
                                 elif event_type == "voice_assistant_command":
@@ -537,7 +540,7 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
-                                return response_text or "Command processed successfully."
+                                return response_text if response_text else "I'm sorry, I couldn't process that command."
 
                         except websocket.WebSocketException as e:
                             self._debug_print(f"WebSocket error while receiving: {str(e)}")
