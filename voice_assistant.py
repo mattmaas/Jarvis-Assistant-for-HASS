@@ -560,11 +560,12 @@ class JarvisAssistant:
                                 if events:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
+                                self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
                                 if not response_text:
                                     response_text = "Command processed successfully, but no response text was received."
-                                    conversation_signals.update_signal.emit(response_text, False)
-                                    self._debug_print("No response text received from Home Assistant")
+                                conversation_signals.update_signal.emit(response_text, False)
+                                self._debug_print(f"Jarvis response: {response_text}")
                                 return response_text
 
                         except websocket.WebSocketException as e:
@@ -598,24 +599,24 @@ class JarvisAssistant:
                     if not self._reconnect_to_home_assistant():
                         raise Exception("Failed to reconnect to Home Assistant")
 
-
-                # Play the actual audio immediately after silence
                 self.message_id += 1
                 service_call = {
+                    "id": self.message_id,
                     "type": "call_service",
                     "domain": "media_player",
                     "service": "play_media",
+                    "target": {
+                        "entity_id": "media_player.kitchen_display"
+                    },
                     "service_data": {
-                        "entity_id": "media_player.kitchen_display",
                         "media_content_id": tts_url,
                         "media_content_type": "music"
-                    },
-                    "id": self.message_id
+                    }
                 }
                 self._debug_print(f"Sending play audio command: {json.dumps(service_call)}")
                 self._send_websocket_message(service_call)
 
-                self._debug_print("Audio commands sent successfully")
+                self._debug_print("Audio command sent successfully")
                 return
 
             except Exception as e:
