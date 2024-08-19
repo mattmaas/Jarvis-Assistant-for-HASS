@@ -13,6 +13,7 @@ import openai
 from datetime import datetime
 import pyautogui
 from debug_window import debug_signals
+from modern_ui import conversation_signals
 from openrgb_control import OpenRGBControl
 import pvporcupine
 import re
@@ -315,9 +316,11 @@ class JarvisAssistant:
 
     def _execute_command(self, command: str):
         self._debug_print(f"Executing command: {command}")
+        conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
         if "never mind" in command.lower() or "nevermind" in command.lower() or "be quiet" in command.lower() or "shut up" in command.lower():
             self._debug_print("Command contains 'never mind' or 'nevermind'. Not executing command.")
             self.rgb_control.set_profile("ice")  # Reset to 'ice' profile for "never mind"
+            conversation_signals.update_signal.emit("Command cancelled.", False)  # Update ModernUI with cancellation
             return
 
         self._set_processing_color()  # Set color to orange before processing
@@ -330,12 +333,14 @@ class JarvisAssistant:
             # Check for local commands
             for cmd_type, phrases in command_phrases.items():
                 if any(phrase in command.lower() for phrase in phrases):
-                    self._execute_local_command(cmd_type, command)
+                    response = self._execute_local_command(cmd_type, command)
+                    conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
                     return
 
             # If no local command matched, send to Home Assistant
             pipeline_id = self._select_pipeline(command)
-            self._send_to_home_assistant(command, pipeline_id)
+            response = self._send_to_home_assistant(command, pipeline_id)
+            conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
         finally:
             if self.is_running:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
@@ -371,6 +376,7 @@ class JarvisAssistant:
             confirmation = "I'm not sure how to execute that command."
 
         self._send_confirmation_to_ha(confirmation)
+        return confirmation
 
     def _query_gpt4o_mini(self, prompt: str, max_tokens: int = 50) -> str:
         try:
@@ -452,7 +458,7 @@ class JarvisAssistant:
                         if not self._connect_to_home_assistant():
                             if attempt == max_retries - 1:
                                 self._debug_print("Failed to establish WebSocket connection after all attempts. Cannot send command.")
-                                return
+                                return "Sorry, I'm having trouble connecting to Home Assistant right now."
                             time.sleep(retry_delay)
                             continue
 
@@ -477,6 +483,7 @@ class JarvisAssistant:
                     tts_url = None
                     tts_end_received = False
                     final_result_received = False
+                    response_text = ""
                     
                     while True:
                         if time.time() - start_time > timeout:
@@ -512,6 +519,7 @@ class JarvisAssistant:
                                 if event_type == "tts-end":
                                     tts_output = event_data.get("tts_output", {})
                                     tts_url = tts_output.get("url")
+                                    response_text = tts_output.get("text", "")
                                     if tts_url:
                                         self._debug_print(f"Found TTS URL: {tts_url}")
                                     tts_end_received = True
@@ -528,7 +536,7 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 full_tts_url = f"{self.ha_url}{tts_url}"
                                 self._play_audio_on_kitchen_speaker(full_tts_url)
-                                return  # Successfully processed the command
+                                return response_text or "Command processed successfully."
 
                         except websocket.WebSocketException as e:
                             self._debug_print(f"WebSocket error while receiving: {str(e)}")
@@ -549,6 +557,7 @@ class JarvisAssistant:
                 time.sleep(retry_delay)
             else:
                 self._debug_print("Failed to send command after all retry attempts")
+                return "I'm sorry, but I couldn't process your command due to connection issues with Home Assistant."
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
         max_retries = 3

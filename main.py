@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QActi
 from PyQt5.QtGui import QIcon
 from voice_assistant import JarvisAssistant
 from debug_window import DebugWindow, debug_signals
+from modern_ui import ModernUI, conversation_signals
 import os
 import winreg
 import time
@@ -17,7 +18,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(current_dir, 'config.ini')
 
 def main():
-    global assistant
+    global assistant, modern_ui
     app = QApplication(sys.argv)
     
     # Create the Jarvis assistant with the config path and increased sensitivity
@@ -28,6 +29,10 @@ def main():
     debug_signals.debug_signal.connect(debug_window.append_text)
     debug_window.hide()  # Initially hide the debug window
     
+    # Create the modern UI
+    modern_ui = ModernUI()
+    modern_ui.hide()  # Initially hide the modern UI
+    
     # Create the system tray icon
     icon = QIcon("icon.png")  # Make sure to have an icon file
     tray = QSystemTrayIcon(icon)
@@ -37,6 +42,7 @@ def main():
     start_action = menu.addAction("Start Listening")
     stop_action = menu.addAction("Stop Listening")
     debug_action = menu.addAction("Show Debug Window")
+    modern_ui_action = menu.addAction("Show Conversation")
     
     # Create a submenu for Home Assistant pipelines
     ha_menu = QMenu("Home Assistant Pipelines")
