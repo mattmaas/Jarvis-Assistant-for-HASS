@@ -126,7 +126,7 @@ class ModernUI(QMainWindow):
         char_format.setForeground(text_color)
 
         # Insert new block if not at the beginning
-        if not self.conversation.toPlainText().isEmpty():
+        if self.conversation.toPlainText():
             cursor.insertBlock()
 
         # Insert the message
