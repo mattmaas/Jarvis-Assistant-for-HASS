@@ -311,7 +311,7 @@ class JarvisAssistant:
 
     def _execute_command(self, command: str):
         self._debug_print(f"Executing command: {command}")
-        if "never mind" in command.lower() or "nevermind" in command.lower():
+        if "never mind" in command.lower() or "nevermind" in command.lower() or "be quiet" in command.lower() or "shut up" in command.lower():
             self._debug_print("Command contains 'never mind' or 'nevermind'. Not executing command.")
             self.rgb_control.set_profile("ice")  # Reset to 'ice' profile for "never mind"
             return
