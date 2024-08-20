@@ -508,6 +508,7 @@ class JarvisAssistant:
                     self.message_id += 1
                     current_message_id = self.message_id
                     message = {
+                        "id": current_message_id,
                         "type": "assist_pipeline/run",
                         "start_stage": "intent",
                         "end_stage": "tts",
@@ -515,7 +516,7 @@ class JarvisAssistant:
                             "text": command
                         },
                         "pipeline": pipeline_id,
-                        "conversation_id": current_message_id
+                        "conversation_id": self.conversation_id
                     }
                     self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
                     self.request_logger.debug(f"Raw request to Home Assistant: {json.dumps(message)}")
@@ -568,20 +569,19 @@ class JarvisAssistant:
                                         self._play_audio_on_kitchen_speaker(full_tts_url)
                                     tts_end_received = True
                                 
-                                elif event_type == "voice_assistant_command":
-                                    command_data = event_data
-                                    command = command_data.get("command")
-                                    args = command_data.get("args")
-                                    self.handle_home_assistant_command(command, args)
+                                elif event_type == "run-end":
+                                    final_result_received = True
+
+                                elif event_type == "error":
+                                    error_message = event_data.get("message", "Unknown error")
+                                    self._debug_print(f"Error event received: {error_message}")
+                                    return f"Error from Home Assistant: {error_message}"
 
                             elif response.get("type") == "result":
                                 if not response.get("success"):
                                     error = response.get("error", {})
                                     error_message = error.get("message", "Unknown error")
-                                    new_pipeline_id = self._handle_home_assistant_error(error_message, current_message_id)
-                                    if new_pipeline_id:
-                                        self._debug_print(f"Retrying with new pipeline ID: {new_pipeline_id}")
-                                        return self._send_to_home_assistant(command, new_pipeline_id)
+                                    self._debug_print(f"Error result received: {error_message}")
                                     return f"Error from Home Assistant: {error_message}"
                                 final_result_received = True
 
