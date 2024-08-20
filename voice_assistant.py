@@ -510,6 +510,7 @@ class JarvisAssistant:
                         "id": current_message_id
                     }
                     self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
+                    self.request_logger.debug(f"Raw request to Home Assistant: {json.dumps(message)}")
                     self.ws.send(json.dumps(message))
                 
                     events = []
@@ -628,6 +629,7 @@ class JarvisAssistant:
                     }
                 }
                 self._debug_print(f"Sending play audio command: {json.dumps(service_call)}")
+                self.request_logger.debug(f"Raw request to play audio: {json.dumps(service_call)}")
                 self._send_websocket_message(service_call)
 
                 self._debug_print("Audio command sent successfully")
@@ -729,6 +731,7 @@ class JarvisAssistant:
                 "id": self.message_id
             }
             self._debug_print(f"Sending play chime command: {json.dumps(service_call)}")
+            self.request_logger.debug(f"Raw request to play chime: {json.dumps(service_call)}")
             with self.ws_lock:
                 self.ws.send(json.dumps(service_call))
 
