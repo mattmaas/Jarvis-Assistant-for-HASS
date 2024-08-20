@@ -28,6 +28,13 @@ class JarvisAssistant:
         self.config = configparser.ConfigParser()
         self.config.read(config_path)
         self.logger = logger
+        self.request_logger = logging.getLogger('request_logger')
+        self.request_logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler('api_requests.log')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        self.request_logger.addHandler(fh)
         self.access_key = self.config['PORCUPINE']['ACCESS_KEY']
         self.sensitivity = float(self.config['PORCUPINE'].get('SENSITIVITY', '0.5'))
         self.porcupine = None
