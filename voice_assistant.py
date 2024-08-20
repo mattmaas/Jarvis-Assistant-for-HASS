@@ -21,6 +21,7 @@ import re
 import threading
 import uuid
 import random
+import time
 
 class JarvisAssistant:
     def __init__(self, config_path, logger):
@@ -50,6 +51,8 @@ class JarvisAssistant:
         self.ping_interval = 50  # Send a ping every 50 seconds
         self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
         self.conversation_id = str(uuid.uuid4())  # Generate a unique conversation ID
+        self.last_request_time = time.time()  # Initialize last request time
+        self.conversation_timeout = 7200  # 2 hours in seconds
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 5
         self.base_reconnect_delay = 60  # Base delay of 1 minute
@@ -327,7 +330,15 @@ class JarvisAssistant:
             return self.wake_words['jarvis']['id']
         return None
 
+    def _refresh_conversation_id(self):
+        current_time = time.time()
+        if current_time - self.last_request_time > self.conversation_timeout:
+            self.conversation_id = str(uuid.uuid4())
+            self._debug_print(f"Refreshed conversation ID: {self.conversation_id}")
+        self.last_request_time = current_time
+
     def _execute_command(self, command: str):
+        self._refresh_conversation_id()
         self._debug_print(f"Executing command: {command}")
         conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
         if any(phrase in command.lower() for phrase in ["never mind", "nevermind", "be quiet", "shut up"]):
