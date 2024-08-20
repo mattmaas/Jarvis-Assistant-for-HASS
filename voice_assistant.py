@@ -22,6 +22,7 @@ import threading
 import uuid
 import random
 import time
+import logging
 
 class JarvisAssistant:
     def __init__(self, config_path, logger):
