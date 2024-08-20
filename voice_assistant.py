@@ -455,7 +455,7 @@ class JarvisAssistant:
                 "text": confirmation
             },
             "pipeline": pipeline_id,
-            "id": self.message_id
+            "conversation_id": self.message_id
         }
         try:
             self._send_websocket_message(message)
@@ -515,7 +515,7 @@ class JarvisAssistant:
                             "text": command
                         },
                         "pipeline": pipeline_id,
-                        "id": current_message_id
+                        "conversation_id": current_message_id
                     }
                     self._debug_print(f"Sending command to Home Assistant: {json.dumps(message)} (ID: {current_message_id})")
                     self.request_logger.debug(f"Raw request to Home Assistant: {json.dumps(message)}")
