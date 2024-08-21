@@ -35,5 +35,11 @@
     "start assistant",
     "resume listening",
     "wake up"
+  ],
+  "switch_conversation": [
+    "switch conversation",
+    "new conversation",
+    "start new conversation",
+    "reset conversation"
   ]
 }
