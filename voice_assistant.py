@@ -416,6 +416,8 @@ class JarvisAssistant:
             nickname, filename = extracted_info.split(',')
             self._add_file_nickname(nickname.strip(), filename.strip())
             confirmation = f"I've added the nickname '{nickname.strip()}' for the file '{filename.strip()}'"
+        elif cmd_type == "switch_conversation":
+            confirmation = self._switch_conversation_id()
         else:
             confirmation = "I'm not sure how to execute that command."
 
@@ -489,6 +491,11 @@ class JarvisAssistant:
             self._debug_print(f"Added nickname '{nickname}' for file '{filename}'")
         except Exception as e:
             self._debug_print(f"Error adding file nickname: {str(e)}")
+
+    def _switch_conversation_id(self):
+        self.conversation_id = str(uuid.uuid4())
+        self._debug_print(f"Switched to new conversation ID: {self.conversation_id}")
+        return f"Conversation ID switched to: {self.conversation_id}"
 
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
