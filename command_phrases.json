@@ -40,6 +40,7 @@
     "switch conversation",
     "new conversation",
     "start new conversation",
-    "reset conversation"
+    "reset conversation",
+    "clear conversation"
   ]
 }
