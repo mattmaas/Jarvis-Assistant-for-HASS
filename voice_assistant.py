@@ -9,7 +9,7 @@ import pyaudio
 import struct
 import speech_recognition as sr
 import io
-import openai
+from openai import OpenAI
 from datetime import datetime
 import pyautogui
 from debug_window import debug_signals
@@ -426,7 +426,8 @@ class JarvisAssistant:
 
     def _query_gpt4o_mini(self, prompt: str, max_tokens: int = 50) -> str:
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=self.config['OPENAI']['API_KEY'])
+            response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
@@ -438,7 +439,7 @@ class JarvisAssistant:
                 temperature=0.5,
                 user=self.conversation_id  # Pass the conversation ID here
             )
-            return response.choices[0].message['content'].strip()
+            return response.choices[0].message.content.strip()
         except Exception as e:
             self._debug_print(f"Error querying GPT-4o-mini: {str(e)}")
             return ""
