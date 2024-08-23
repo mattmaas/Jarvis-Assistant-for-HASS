@@ -325,7 +325,7 @@ class JarvisAssistant:
             words = text.lower().split()
             for pipeline_name, data in self.wake_words.items():
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
-                if any(keyword in words for keyword in keywords):
+                if any(keyword in ' '.join(words) for keyword in keywords):
                     return data['id']
             return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
         else:
