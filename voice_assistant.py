@@ -497,7 +497,25 @@ class JarvisAssistant:
         self._debug_print(f"Switched to new conversation ID: {self.conversation_id}")
         confirmation = f"Starting a new conversation. Conversation ID switched to: {self.conversation_id}"
         self._send_confirmation_to_ha(confirmation)
+        self._send_message_to_kitchen_display("Conversation cleared. Starting a new conversation.")
         return confirmation
+
+    def _send_message_to_kitchen_display(self, message):
+        try:
+            self.message_id += 1
+            service_call = {
+                "id": self.message_id,
+                "type": "call_service",
+                "domain": "notify",
+                "service": "kitchen_display",
+                "service_data": {
+                    "message": message
+                }
+            }
+            self._debug_print(f"Sending message to kitchen display: {json.dumps(service_call)}")
+            self._send_websocket_message(service_call)
+        except Exception as e:
+            self._debug_print(f"Error sending message to kitchen display: {str(e)}")
 
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3

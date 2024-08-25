@@ -41,6 +41,7 @@
     "new conversation",
     "start new conversation",
     "reset conversation",
-    "clear conversation"
+    "clear conversation",
+    "delete conversation"
   ]
 }
