@@ -23,6 +23,7 @@ import uuid
 import random
 import time
 import logging
+import threading
 
 class JarvisAssistant:
     def __init__(self, config_path, logger):
@@ -67,6 +68,11 @@ class JarvisAssistant:
         
         # Get the directory of the current script
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Voice change tracking
+        self.current_voice = None
+        self.voice_change_time = None
+        self.voice_duration = 300  # 5 minutes in seconds
         
         # Remove Flask server initialization
 
@@ -321,13 +327,32 @@ class JarvisAssistant:
                 self._debug_print("Set RGB profile back to 'ice'")
 
     def _select_pipeline(self, text: str) -> str:
+        current_time = time.time()
+        
+        # Check if it's time to revert the voice
+        if self.current_voice and (current_time - self.voice_change_time) > self.voice_duration:
+            self._debug_print("Voice duration expired. Reverting to default voice.")
+            self.current_voice = None
+
         if self.ha_pipeline == "auto":
             words = text.lower().split()
+            
+            # Check for voice reversion commands
+            if any(phrase in text.lower() for phrase in ["revert voice", "clear voice", "normal voice"]):
+                self._debug_print("Voice reversion command detected. Reverting to default voice.")
+                self.current_voice = None
+                return self.wake_words['jarvis']['id']
+            
             for pipeline_name, data in self.wake_words.items():
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
                 if any(keyword in ' '.join(words) for keyword in keywords):
+                    self.current_voice = data['id']
+                    self.voice_change_time = current_time
+                    self._debug_print(f"Voice changed to {data['name']}. Timer started.")
                     return data['id']
-            return self.wake_words['jarvis']['id']  # Return default pipeline ID if no keywords match
+            
+            # If no new voice is selected, use the current voice or default
+            return self.current_voice or self.wake_words['jarvis']['id']
         else:
             return self.ha_pipeline  # Return the manually selected pipeline ID
 
@@ -390,6 +415,13 @@ class JarvisAssistant:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
             else:
                 self.rgb_control.set_mic_color((255, 69, 0))  # Maintain orange color if stopped
+
+        # Debug print current voice information
+        if self.current_voice:
+            time_left = self.voice_duration - (time.time() - self.voice_change_time)
+            self._debug_print(f"Current voice: {self.current_voice}, Time left: {int(time_left)} seconds")
+        else:
+            self._debug_print("Using default voice")
 
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
