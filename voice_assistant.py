@@ -396,20 +396,20 @@ class JarvisAssistant:
 
         if cmd_type == "stop_listening":
             self.stop()
-            confirmation = "I've stopped listening"
+            confirmation = "I've stopped listening. You can wake me up again by saying 'Hey Jarvis'."
         elif cmd_type == "start_listening":
             self.start()
-            confirmation = "I've started listening"
+            confirmation = "I'm now listening and ready to assist you."
         elif cmd_type == "type_command":
             prompt = f"Based on this input: '{command}', provide only the exact text to be typed, without any additional formatting or explanation. Remove any phrases like 'type into my pc', 'type in to my pc', 'type into pc', 'type in to pc', 'type in pc', 'type on pc', 'type for me', 'type into my computer', 'enter text', 'paste', or 'enter into my computer' from the beginning of the input. If the input suggests creating content, generate that content directly. Aim for a response of up to 1000 characters."
             extracted_info = self._query_gpt4o_mini(prompt, max_tokens=1000)
             self._type_string(extracted_info)
-            confirmation = f"I've typed the text for you"
+            confirmation = f"I've typed the following text for you: {extracted_info[:50]}..."
         elif cmd_type == "launch_file":
             prompt = f"Extract only the file or program name to be launched from this input: {command}"
             extracted_info = self._query_gpt4o_mini(prompt)
             self._launch_file(extracted_info)
-            confirmation = f"I've launched the file or program: {extracted_info}"
+            confirmation = f"I'm launching the file or program: {extracted_info}"
         elif cmd_type == "add_file_nickname":
             prompt = f"Extract the nickname and filename from this input: {command}. Return them separated by a comma, without any additional text."
             extracted_info = self._query_gpt4o_mini(prompt)
@@ -422,7 +422,28 @@ class JarvisAssistant:
             confirmation = "I'm not sure how to execute that command."
 
         self._send_confirmation_to_ha(confirmation)
+        self._narrate_action(confirmation)
         return confirmation
+
+    def _narrate_action(self, message):
+        try:
+            self.message_id += 1
+            service_call = {
+                "id": self.message_id,
+                "type": "call_service",
+                "domain": "tts",
+                "service": "google_translate_say",
+                "target": {
+                    "entity_id": "media_player.kitchen_display"
+                },
+                "service_data": {
+                    "message": message
+                }
+            }
+            self._debug_print(f"Sending narration command: {json.dumps(service_call)}")
+            self._send_websocket_message(service_call)
+        except Exception as e:
+            self._debug_print(f"Error narrating action: {str(e)}")
 
     def _query_gpt4o_mini(self, prompt: str, max_tokens: int = 50) -> str:
         try:
