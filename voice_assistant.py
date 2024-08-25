@@ -44,7 +44,7 @@ class JarvisAssistant:
         self.is_running = False
         self.debug_signals = debug_signals
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
-        openai.api_key = self.config['OPENAI']['API_KEY']
+        self.openai_client = OpenAI(api_key=self.config['OPENAI']['API_KEY'])
         self.stt_provider = self.config['STT']['PROVIDER']
         self.ha_url = self.config['HOME_ASSISTANT']['URL']
         self.ha_token = self.config['HOME_ASSISTANT']['ACCESS_TOKEN']
@@ -295,7 +295,7 @@ class JarvisAssistant:
                         audio_data = audio.get_wav_data()
                         audio_file = io.BytesIO(audio_data)
                         audio_file.name = 'audio.wav'  # Add a name attribute to the BytesIO object
-                        response = openai.Audio.transcribe("whisper-1", audio_file)
+                        response = self.openai_client.audio.transcriptions.create(model="whisper-1", file=audio_file)
                         if response and 'text' in response:
                             command = response['text']
                             self._debug_print(f"Command recognized: {command}")
@@ -426,8 +426,7 @@ class JarvisAssistant:
 
     def _query_gpt4o_mini(self, prompt: str, max_tokens: int = 50) -> str:
         try:
-            client = openai.OpenAI(api_key=self.config['OPENAI']['API_KEY'])
-            response = client.chat.completions.create(
+            response = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
