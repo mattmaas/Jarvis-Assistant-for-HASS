@@ -1074,7 +1074,7 @@ class JarvisAssistant:
         except Exception as e:
             self._debug_print(f"An error occurred while listening for reply: {e}")
         finally:
-            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile
-            self._debug_print("Reset RGB profile to 'ice'")
+            self.rgb_control.set_profile("ice")  # Always reset to 'ice' profile
+            self._debug_print("Reset RGB profile to 'ice' after listening for reply")
         return None
 
