@@ -28,5 +28,10 @@
     "id": "01j5t1m5qzz6s9gghx80p5y9q1",
     "name": "Jarvis 4o mini",
     "keywords": [ "mini", "quick", "quickly" ]
+  },
+  "honeybee": {
+    "id": "01honeybee123456789",
+    "name": "Honeybee",
+    "keywords": [ "honeybee", "honey", "bee" ]
   }
 }

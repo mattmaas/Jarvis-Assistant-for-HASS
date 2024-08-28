@@ -61,7 +61,7 @@ class JarvisAssistant:
         self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
         self.conversation_id = str(uuid.uuid4())  # Generate a unique conversation ID
         self.last_request_time = time.time()  # Initialize last request time
-        self.conversation_timeout = 7200  # 2 hours in seconds
+        self.conversation_timeout = 300  # 5 minutes in seconds
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 5
         self.base_reconnect_delay = 60  # Base delay of 1 minute
@@ -144,7 +144,7 @@ class JarvisAssistant:
 
     def _run(self):
         try:
-            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis"], sensitivities=[self.sensitivity])
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis", "honeybee"], sensitivities=[self.sensitivity, self.sensitivity])
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,
@@ -160,10 +160,16 @@ class JarvisAssistant:
 
                 keyword_index = self.porcupine.process(pcm)
                 if keyword_index >= 0 and self.is_running:
-                    self._debug_print("Wake word 'Jarvis' detected")
-                    self._play_chime()
-                    self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
-                    self._process_speech()
+                    if keyword_index == 0:
+                        self._debug_print("Wake word 'Jarvis' detected")
+                        self._play_chime()
+                        self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
+                        self._process_speech()
+                    elif keyword_index == 1:
+                        self._debug_print("Wake word 'Honeybee' detected")
+                        self._play_chime()
+                        self.rgb_control.set_mic_color((255, 215, 0))  # Set gold color
+                        self._process_speech(pipeline_id=self.config['HONEYBEE']['PIPELINE_ID'])
                     # Remove setting 'ice' profile here
 
         finally:
@@ -274,7 +280,7 @@ class JarvisAssistant:
                 finally:
                     self.ws = None
 
-    def _process_speech(self):
+    def _process_speech(self, pipeline_id=None):
         recognizer = sr.Recognizer()
         try:
             with sr.Microphone() as source:
@@ -369,6 +375,9 @@ class JarvisAssistant:
             self.conversation_id = str(uuid.uuid4())
             self._debug_print(f"Refreshed conversation ID: {self.conversation_id}")
         self.last_request_time = current_time
+        
+    def _check_and_refresh_conversation_id(self):
+        self._refresh_conversation_id()
 
     def _execute_command(self, command: str):
         self._refresh_conversation_id()
@@ -397,7 +406,8 @@ class JarvisAssistant:
                     return
 
             # If no local command matched, send to Home Assistant
-            pipeline_id = self._select_pipeline(command)
+            if pipeline_id is None:
+                pipeline_id = self._select_pipeline(command)
             response = self._send_to_home_assistant(command, pipeline_id)
             if response:
                 self._debug_print(f"Home Assistant response: {response}")
