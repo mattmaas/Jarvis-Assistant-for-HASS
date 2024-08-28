@@ -763,7 +763,8 @@ class JarvisAssistant:
                                     reply = self._listen_for_reply()
                                     if reply:
                                         self._debug_print(f"User replied: {reply}")
-                                        return self._send_to_home_assistant(reply, pipeline_id)
+                                        # Process the reply as a new command
+                                        self._process_speech(pipeline_id)
                                     else:
                                         self._debug_print("No valid reply received. Ending conversation.")
                                 
