@@ -700,6 +700,17 @@ class JarvisAssistant:
                                 self._debug_print("Received response text, TTS end event, and final result. Processing complete.")
                                 if events:
                                     self._process_events(current_message_id, events)
+                                
+                                # Check if the response expects an answer
+                                if self._response_expects_answer(response_text):
+                                    self._debug_print("Response expects an answer. Listening for reply...")
+                                    time.sleep(1)  # Wait for 1 second after the response finishes
+                                    self._play_chime()
+                                    reply = self._listen_for_reply()
+                                    if reply:
+                                        self._debug_print(f"User replied: {reply}")
+                                        return self._send_to_home_assistant(reply, pipeline_id)
+                                
                                 return response_text
 
                         except websocket.WebSocketException as e:
@@ -931,3 +942,42 @@ class JarvisAssistant:
             raise Exception(f"Timeout waiting for WebSocket response after {timeout} seconds")
         except Exception as e:
             raise Exception(f"Error sending WebSocket message: {str(e)}")
+
+    def _response_expects_answer(self, response_text):
+        prompt = f"Analyze this response and determine if it's expecting or asking for a reply from the user. Return only 'True' if it expects a reply, or 'False' if it doesn't: '{response_text}'"
+        result = self._query_gpt4o_mini(prompt, max_tokens=5)
+        return result.strip().lower() == 'true'
+
+    def _listen_for_reply(self):
+        recognizer = sr.Recognizer()
+        try:
+            with sr.Microphone() as source:
+                self._debug_print("Listening for reply...")
+                recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+
+            if self.stt_provider == "google":
+                reply = recognizer.recognize_google(audio)
+            elif self.stt_provider == "whisper":
+                audio_data = audio.get_wav_data()
+                audio_file = io.BytesIO(audio_data)
+                audio_file.name = 'reply_audio.wav'
+                response = self.openai_client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+                reply = response['text'] if response and 'text' in response else ""
+            else:
+                self._debug_print("Invalid STT provider specified")
+                return None
+
+            return reply
+        except sr.WaitTimeoutError:
+            self._debug_print("No reply detected within the timeout period.")
+            return None
+        except sr.UnknownValueError:
+            self._debug_print("Could not understand the reply")
+            return None
+        except sr.RequestError as e:
+            self._debug_print(f"Could not request results; {e}")
+            return None
+        except Exception as e:
+            self._debug_print(f"An error occurred while listening for reply: {e}")
+            return None
