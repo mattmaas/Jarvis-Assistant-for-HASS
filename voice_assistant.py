@@ -168,6 +168,7 @@ class JarvisAssistant:
                 
                 if keyword_index >= 0 and self.is_running:
                     self.last_wakeword_index = keyword_index
+                    self.followup_requested = False  # Reset followup flag when wake word is detected
                     if keyword_index == 0:
                         self._debug_print("Wake word 'Jarvis' detected")
                         self._play_chime()
@@ -289,6 +290,7 @@ class JarvisAssistant:
                     self.ws = None
 
     def _process_speech(self, pipeline_id=None):
+        self.followup_requested = False  # Reset followup flag at the beginning of processing
         recognizer = sr.Recognizer()
         try:
             with sr.Microphone() as source:
@@ -388,6 +390,7 @@ class JarvisAssistant:
         self._refresh_conversation_id()
 
     def _execute_command(self, command: str, pipeline_id: str = None):
+        self.followup_requested = False  # Reset followup flag before processing new command
         self._refresh_conversation_id()
         self._debug_print(f"Executing command: {command}")
         conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
