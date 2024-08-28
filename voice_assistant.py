@@ -144,7 +144,7 @@ class JarvisAssistant:
 
     def _run(self):
         try:
-            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis", "honeybee"], sensitivities=[self.sensitivity, self.sensitivity])
+            self.porcupine = pvporcupine.create(access_key=self.access_key, keywords=["jarvis", "blueberry"], sensitivities=[self.sensitivity, self.sensitivity])
             self.pa = pyaudio.PyAudio()
             self.audio_stream = self.pa.open(
                 rate=self.porcupine.sample_rate,
@@ -166,10 +166,10 @@ class JarvisAssistant:
                         self.rgb_control.set_mic_color((128, 0, 128))  # Set purple color
                         self._process_speech()
                     elif keyword_index == 1:
-                        self._debug_print("Wake word 'Honeybee' detected")
+                        self._debug_print("Wake word 'Blueberry' detected")
                         self._play_chime()
-                        self.rgb_control.set_mic_color((255, 215, 0))  # Set gold color
-                        self._process_speech(pipeline_id=self.config['HONEYBEE']['PIPELINE_ID'])
+                        self.rgb_control.set_mic_color((0, 0, 255))  # Set blue color
+                        self._process_speech(pipeline_id=self.config['BLUEBERRY']['PIPELINE_ID'])
                     # Remove setting 'ice' profile here
 
         finally:

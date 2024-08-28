@@ -29,9 +29,9 @@
     "name": "Jarvis 4o mini",
     "keywords": [ "mini", "quick", "quickly" ]
   },
-  "honeybee": {
-    "id": "01honeybee123456789",
-    "name": "Honeybee",
-    "keywords": [ "honeybee", "honey", "bee" ]
+  "blueberry": {
+    "id": "01blueberry123456789",
+    "name": "Blueberry",
+    "keywords": [ "blueberry", "berry", "blue" ]
   }
 }
