@@ -67,7 +67,6 @@ class JarvisAssistant:
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 5
         self.base_reconnect_delay = 60  # Base delay of 1 minute
-        self.followup_requested = False
         # Get the directory of the current script
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -168,7 +167,6 @@ class JarvisAssistant:
                 
                 if keyword_index >= 0 and self.is_running:
                     self.last_wakeword_index = keyword_index
-                    self.followup_requested = False  # Reset followup flag when wake word is detected
                     if keyword_index == 0:
                         self._debug_print("Wake word 'Jarvis' detected")
                         self._play_chime()
@@ -290,7 +288,6 @@ class JarvisAssistant:
                     self.ws = None
 
     def _process_speech(self, pipeline_id=None):
-        self.followup_requested = False  # Reset followup flag at the beginning of processing
         recognizer = sr.Recognizer()
         try:
             with sr.Microphone() as source:
@@ -778,20 +775,6 @@ class JarvisAssistant:
                                 if events:
                                     self._process_events(current_message_id, events)
                                 
-                                # Check if the response expects an answer
-                                response_text, expects_reply = self._query_gpt4o_mini(response_text, max_tokens=200)
-                                if expects_reply:
-                                    self._debug_print("Response expects an answer. Listening for reply...")
-                                    time.sleep(1)  # Wait for 1 second after the response finishes
-                                    self._play_chime()
-                                    reply = self._listen_for_reply()
-                                    if reply:
-                                        self._debug_print(f"User replied: {reply}")
-                                        # Process the reply as a new command
-                                        self._process_speech(pipeline_id)
-                                    else:
-                                        self._debug_print("No valid reply received. Ending conversation.")
-                                
                                 return response_text
 
                         except websocket.WebSocketException as e:
@@ -1031,50 +1014,4 @@ class JarvisAssistant:
         except Exception as e:
             raise Exception(f"Error sending WebSocket message: {str(e)}")
 
-    def _response_expects_answer(self, response_text):
-        prompt = f"(Reply Yes or No exactly no punctionuation or other words). Analyze this response and determine if it should wait for a reply from the user: '{response_text}'"
-        _, expects_reply = self._query_gpt4o_mini(prompt, max_tokens=100)
-        return expects_reply == "Yes"
-
-    def _listen_for_reply(self):
-        recognizer = sr.Recognizer()
-        try:
-            self._debug_print("Preparing to listen for reply...")
-            self.rgb_control.set_mic_color((128, 0, 128))  # Set to purple color for listening
-            self._debug_print("Set RGB color to purple (listening)")
-            
-            with sr.Microphone() as source:
-                self._debug_print("Listening for reply...")
-                recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                audio = recognizer.listen(source, timeout=10, phrase_time_limit=15)
-
-            self._debug_print("Audio captured, processing...")
-            self.rgb_control.set_mic_color((255, 69, 0))  # Set to orange color for processing
-
-            if self.stt_provider == "google":
-                reply = recognizer.recognize_google(audio)
-            elif self.stt_provider == "whisper":
-                audio_data = audio.get_wav_data()
-                audio_file = io.BytesIO(audio_data)
-                audio_file.name = 'reply_audio.wav'
-                response = self.openai_client.audio.transcriptions.create(model="whisper-1", file=audio_file)
-                reply = response['text'] if response and 'text' in response else ""
-            else:
-                self._debug_print("Invalid STT provider specified")
-                return None
-
-            self._debug_print(f"Reply recognized: {reply}")
-            return reply
-        except sr.WaitTimeoutError:
-            self._debug_print("No reply detected within the timeout period.")
-        except sr.UnknownValueError:
-            self._debug_print("Could not understand the reply")
-        except sr.RequestError as e:
-            self._debug_print(f"Could not request results; {e}")
-        except Exception as e:
-            self._debug_print(f"An error occurred while listening for reply: {e}")
-        finally:
-            self.rgb_control.set_profile("ice")  # Always reset to 'ice' profile
-            self._debug_print("Reset RGB profile to 'ice' after listening for reply")
-        return None
 
