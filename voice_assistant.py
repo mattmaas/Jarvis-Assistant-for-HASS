@@ -390,6 +390,7 @@ class JarvisAssistant:
         self._refresh_conversation_id()
 
     def _execute_command(self, command: str, pipeline_id: str = None):
+        result = None
         try:
             self._refresh_conversation_id()
             self._debug_print(f"Executing command: {command}")
@@ -401,8 +402,6 @@ class JarvisAssistant:
 
             self._set_processing_color()  # Set color to orange before processing
 
-        result = None
-        try:
             # Load command phrases
             command_phrases_path = os.path.join(self.script_dir, 'command_phrases.json')
             with open(command_phrases_path, 'r') as f:
