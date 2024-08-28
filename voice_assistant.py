@@ -764,6 +764,9 @@ class JarvisAssistant:
                                     if reply:
                                         self._debug_print(f"User replied: {reply}")
                                         return self._send_to_home_assistant(reply, pipeline_id)
+                                    else:
+                                        self._debug_print("No valid reply received. Ending conversation.")
+                                        return "I'm sorry, I didn't catch that. Is there anything else I can help you with?"
                                 
                                 return response_text
 
@@ -1012,10 +1015,17 @@ class JarvisAssistant:
     def _listen_for_reply(self):
         recognizer = sr.Recognizer()
         try:
+            self._debug_print("Preparing to listen for reply...")
+            self.rgb_control.set_mic_color((128, 0, 128))  # Set to purple color for listening
+            self._debug_print("Set RGB color to purple (listening)")
+            
             with sr.Microphone() as source:
                 self._debug_print("Listening for reply...")
                 recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+                audio = recognizer.listen(source, timeout=10, phrase_time_limit=15)
+
+            self._debug_print("Audio captured, processing...")
+            self.rgb_control.set_mic_color((255, 69, 0))  # Set to orange color for processing
 
             if self.stt_provider == "google":
                 reply = recognizer.recognize_google(audio)
@@ -1029,16 +1039,17 @@ class JarvisAssistant:
                 self._debug_print("Invalid STT provider specified")
                 return None
 
+            self._debug_print(f"Reply recognized: {reply}")
             return reply
         except sr.WaitTimeoutError:
             self._debug_print("No reply detected within the timeout period.")
-            return None
         except sr.UnknownValueError:
             self._debug_print("Could not understand the reply")
-            return None
         except sr.RequestError as e:
             self._debug_print(f"Could not request results; {e}")
-            return None
         except Exception as e:
             self._debug_print(f"An error occurred while listening for reply: {e}")
-            return None
+        finally:
+            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile
+            self._debug_print("Reset RGB profile to 'ice'")
+        return None
