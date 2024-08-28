@@ -558,10 +558,31 @@ class JarvisAssistant:
     def _switch_conversation_id(self):
         self.conversation_id = str(uuid.uuid4())
         self._debug_print(f"Switched to new conversation ID: {self.conversation_id}")
-        confirmation = f"Starting a new conversation. Conversation ID switched to: {self.conversation_id}"
+        confirmation = "Conversation cleared. Starting a new conversation."
         self._send_confirmation_to_ha(confirmation)
-        self._send_message_to_kitchen_display("Conversation cleared. Starting a new conversation.")
+        self._send_message_to_kitchen_display(confirmation)
+        self._play_tts_message(confirmation)
         return confirmation
+
+    def _play_tts_message(self, message):
+        try:
+            self.message_id += 1
+            service_call = {
+                "id": self.message_id,
+                "type": "call_service",
+                "domain": "tts",
+                "service": "google_translate_say",
+                "target": {
+                    "entity_id": "media_player.kitchen_display"
+                },
+                "service_data": {
+                    "message": message
+                }
+            }
+            self._debug_print(f"Sending TTS message: {json.dumps(service_call)}")
+            self._send_websocket_message(service_call)
+        except Exception as e:
+            self._debug_print(f"Error playing TTS message: {str(e)}")
 
     def _send_message_to_kitchen_display(self, message):
         try:
