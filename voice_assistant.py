@@ -44,6 +44,7 @@ class JarvisAssistant:
         self.audio_stream = None
         self.is_running = False
         self.debug_signals = debug_signals
+        self.last_wakeword_index = -1
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.openai_client = OpenAI(api_key=self.config['OPENAI']['API_KEY'])
         self.stt_provider = self.config['STT']['PROVIDER']
@@ -65,7 +66,7 @@ class JarvisAssistant:
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 5
         self.base_reconnect_delay = 60  # Base delay of 1 minute
-        
+        self.followup_requested = False
         # Get the directory of the current script
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -158,8 +159,14 @@ class JarvisAssistant:
                 pcm = self.audio_stream.read(self.porcupine.frame_length)
                 pcm = struct.unpack_from("h" * self.porcupine.frame_length, pcm)
 
-                keyword_index = self.porcupine.process(pcm)
+                keyword_index = -1
+                if self.followup_requested:
+                    keyword_index = self.last_wakeword_index
+                else:
+                    keyword_index = self.porcupine.process(pcm)
+                
                 if keyword_index >= 0 and self.is_running:
+                    self.last_wakeword_index = keyword_index
                     if keyword_index == 0:
                         self._debug_print("Wake word 'Jarvis' detected")
                         self._play_chime()
@@ -391,6 +398,7 @@ class JarvisAssistant:
 
         self._set_processing_color()  # Set color to orange before processing
 
+        result = None
         try:
             # Load command phrases
             command_phrases_path = os.path.join(self.script_dir, 'command_phrases.json')
@@ -403,7 +411,6 @@ class JarvisAssistant:
                     response = self._execute_local_command(cmd_type, command)
                     self._debug_print(f"Local command response: {response}")
                     conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
-                    self._handle_follow_up(pipeline_id)
                     return
 
             # If no local command matched, send to Home Assistant
@@ -413,44 +420,34 @@ class JarvisAssistant:
             if response:
                 self._debug_print(f"Home Assistant response: {response}")
                 conversation_signals.update_signal.emit(response, False)  # Emit the response
+                result = response
             else:
                 fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
                 self._debug_print(f"Fallback response: {fallback_response}")
                 conversation_signals.update_signal.emit(fallback_response, False)
+                result = fallback_response
             
-            self._handle_follow_up(pipeline_id)
         except Exception as e:
             error_message = f"Error executing command: {str(e)}"
             self._debug_print(error_message)
             conversation_signals.update_signal.emit(error_message, False)  # Update ModernUI with error message
+            result = error_message
         finally:
             if self.is_running:
                 self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
             else:
                 self.rgb_control.set_mic_color((255, 69, 0))  # Maintain orange color if stopped
 
+        #check with 4o-mini if a followup reply is expected of me, if so, set self.followup_requested = true
+        if self._response_expects_answer(result):
+            self.followup_requested = True
+        
         # Debug print current voice information
         if self.current_voice:
             time_left = self.voice_duration - (time.time() - self.voice_change_time)
             self._debug_print(f"Current voice: {self.current_voice}, Time left: {int(time_left)} seconds")
         else:
             self._debug_print("Using default voice")
-
-    def _handle_follow_up(self, pipeline_id):
-        self._debug_print("Preparing for potential follow-up...")
-        time.sleep(1)  # Short pause to ensure everything is clear from the last call
-        self.rgb_control.set_profile("ice")  # Reset to 'ice' profile
-        self._play_chime()
-        self.rgb_control.set_mic_color((128, 0, 128))  # Set to purple color for listening
-        self._debug_print("Listening for potential follow-up...")
-        
-        reply = self._listen_for_reply()
-        if reply:
-            self._debug_print(f"Follow-up detected: {reply}")
-            self._execute_command(reply, pipeline_id)
-        else:
-            self._debug_print("No follow-up detected. Returning to idle state.")
-            self.rgb_control.set_profile("ice")
 
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
@@ -1027,9 +1024,9 @@ class JarvisAssistant:
             raise Exception(f"Error sending WebSocket message: {str(e)}")
 
     def _response_expects_answer(self, response_text):
-        prompt = f"Analyze this response and determine if it's expecting or asking for a reply from the user: '{response_text}'"
+        prompt = f"(Reply Yes or No exactly no punctionuation or other words). Analyze this response and determine if it should wait for a reply from the user: '{response_text}'"
         _, expects_reply = self._query_gpt4o_mini(prompt, max_tokens=100)
-        return expects_reply
+        return expects_reply == "Yes"
 
     def _listen_for_reply(self):
         recognizer = sr.Recognizer()
