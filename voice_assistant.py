@@ -299,7 +299,7 @@ class JarvisAssistant:
                     if command:
                         best_guess = command['alternative'][0]['transcript']
                         self._debug_print(f"Command recognized: {best_guess}")
-                        self._execute_command(best_guess)
+                        self._execute_command(best_guess, pipeline_id)
                     else:
                         self._debug_print("Could not understand the command")
                 elif self.stt_provider == "whisper":
@@ -379,7 +379,7 @@ class JarvisAssistant:
     def _check_and_refresh_conversation_id(self):
         self._refresh_conversation_id()
 
-    def _execute_command(self, command: str):
+    def _execute_command(self, command: str, pipeline_id: str = None):
         self._refresh_conversation_id()
         self._debug_print(f"Executing command: {command}")
         conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
