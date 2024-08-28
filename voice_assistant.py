@@ -24,6 +24,7 @@ import random
 import time
 import logging
 import threading
+from websocket import WebSocketException
 
 class JarvisAssistant:
     def __init__(self, config_path, logger):
@@ -438,9 +439,14 @@ class JarvisAssistant:
             else:
                 self.rgb_control.set_mic_color((255, 69, 0))  # Maintain orange color if stopped
 
-        #check with 4o-mini if a followup reply is expected of me, if so, set self.followup_requested = true
+        # Check with 4o-mini if a followup reply is expected
         if self._response_expects_answer(result):
             self.followup_requested = True
+            self._debug_print("Follow-up requested. Waiting for speaker to be idle...")
+            self._wait_for_speaker_idle()
+            if self.followup_requested:  # Check again in case it was cancelled during waiting
+                self._debug_print("Speaker is idle. Listening for follow-up...")
+                self._listen_for_reply()
         
         # Debug print current voice information
         if self.current_voice:
@@ -1069,3 +1075,39 @@ class JarvisAssistant:
             self.rgb_control.set_profile("ice")  # Reset to 'ice' profile
             self._debug_print("Reset RGB profile to 'ice'")
         return None
+
+    def _wait_for_speaker_idle(self):
+        max_wait_time = 60  # Maximum wait time in seconds
+        check_interval = 2  # Check every 2 seconds
+        start_time = time.time()
+
+        while time.time() - start_time < max_wait_time:
+            if self._is_speaker_idle():
+                return True
+            time.sleep(check_interval)
+
+        self._debug_print("Timed out waiting for speaker to become idle.")
+        self.followup_requested = False
+        return False
+
+    def _is_speaker_idle(self):
+        try:
+            self.message_id += 1
+            message = {
+                "id": self.message_id,
+                "type": "get_states",
+                "entity_ids": ["media_player.kitchen_display"]
+            }
+            self._send_websocket_message(message)
+            
+            response = self._receive_websocket_message()
+            if response and "result" in response:
+                state = response["result"][0]["state"]
+                self._debug_print(f"Speaker state: {state}")
+                return state == "idle"
+            else:
+                self._debug_print("Failed to get speaker state")
+                return False
+        except Exception as e:
+            self._debug_print(f"Error checking speaker state: {str(e)}")
+            return False
