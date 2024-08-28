@@ -390,17 +390,16 @@ class JarvisAssistant:
         self._refresh_conversation_id()
 
     def _execute_command(self, command: str, pipeline_id: str = None):
-        self.followup_requested = False  # Reset followup flag before processing new command
-        self._refresh_conversation_id()
-        self._debug_print(f"Executing command: {command}")
-        conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
-        if any(phrase in command.lower() for phrase in ["never mind", "nevermind", "be quiet", "shut up"]):
-            self._debug_print("Command cancelled by user.")
-            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile for cancellation
-            conversation_signals.update_signal.emit("Command cancelled.", False)  # Update ModernUI with cancellation
-            return
+        try:
+            self._refresh_conversation_id()
+            self._debug_print(f"Executing command: {command}")
+            conversation_signals.update_signal.emit(command, True)  # Update ModernUI with user's command
+            if any(phrase in command.lower() for phrase in ["never mind", "nevermind", "be quiet", "shut up"]):
+                self._debug_print("Command cancelled by user.")
+                conversation_signals.update_signal.emit("Command cancelled.", False)  # Update ModernUI with cancellation
+                return
 
-        self._set_processing_color()  # Set color to orange before processing
+            self._set_processing_color()  # Set color to orange before processing
 
         result = None
         try:
