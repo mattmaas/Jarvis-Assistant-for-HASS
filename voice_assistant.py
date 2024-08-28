@@ -431,17 +431,7 @@ class JarvisAssistant:
             self.rgb_control.set_profile("ice")  # Always reset to 'ice' profile after processing
             self._debug_print("Reset RGB profile to 'ice' after command execution")
 
-        # Check if a followup reply is expected
-        if self._response_expects_answer(result):
-            self._debug_print("Follow-up requested. Listening for reply...")
-            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile before listening
-            reply = self._listen_for_reply()
-            if reply:
-                self._debug_print(f"User replied: {reply}")
-                # Process the reply as a new command
-                self._execute_command(reply, pipeline_id)
-            else:
-                self._debug_print("No valid reply received. Ending conversation.")
+        # Removed follow-up functionality
         
         # Debug print current voice information
         if self.current_voice:
