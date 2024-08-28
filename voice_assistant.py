@@ -766,7 +766,6 @@ class JarvisAssistant:
                                         return self._send_to_home_assistant(reply, pipeline_id)
                                     else:
                                         self._debug_print("No valid reply received. Ending conversation.")
-                                        return "I'm sorry, I didn't catch that. Is there anything else I can help you with?"
                                 
                                 return response_text
 
