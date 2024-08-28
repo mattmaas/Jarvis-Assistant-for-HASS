@@ -726,6 +726,29 @@ class JarvisAssistant:
                                     return f"Error from Home Assistant: {error_message}"
                                 final_result_received = True
 
+                            if response.get("type") == "event":
+                                event_type = response.get("event", {}).get("type")
+                                if event_type == "run-end":
+                                    final_result_received = True
+                                elif event_type == "tts-end":
+                                    tts_end_received = True
+                                    tts_output = response.get("event", {}).get("data", {}).get("tts_output", {})
+                                    tts_url = tts_output.get("url")
+                                    if tts_url:
+                                        self._debug_print(f"Found TTS URL: {tts_url}")
+                                        full_tts_url = f"{self.ha_url}{tts_url}"
+                                        self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
+                                        self._play_audio_on_kitchen_speaker(full_tts_url)
+                                elif event_type == "intent-end":
+                                    speech = response.get("event", {}).get("data", {}).get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                                    if speech:
+                                        self._debug_print(f"Extracted speech from intent-end: {speech}")
+                                        response_text = speech
+                                        conversation_signals.update_signal.emit(command, True)  # Emit user's command
+                                        conversation_signals.update_signal.emit(response_text, False)  # Emit Jarvis's response
+                                        self._debug_print(f"User command: {command}")
+                                        self._debug_print(f"Jarvis response: {response_text}")
+
                             if response_text and tts_end_received and final_result_received:
                                 self._debug_print("Received response text, TTS end event, and final result. Processing complete.")
                                 if events:
@@ -809,16 +832,23 @@ class JarvisAssistant:
             event_type = event.get("event", {}).get("type")
             event_data = event.get("event", {}).get("data", {})
             
-            if event_type == "intent_start":
+            if event_type == "run-start":
+                self._debug_print(f"Run started (ID: {response_id})")
+            elif event_type == "intent-start":
                 self._debug_print(f"Intent processing started (ID: {response_id})")
-            elif event_type == "intent_end":
+            elif event_type == "intent-end":
                 self._debug_print(f"Intent processing ended (ID: {response_id})")
-            elif event_type == "tts_start":
+                speech = event_data.get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                if speech:
+                    self._debug_print(f"Speech from intent-end: {speech}")
+            elif event_type == "tts-start":
                 self._debug_print(f"TTS processing started (ID: {response_id})")
-            elif event_type == "tts_end":
+            elif event_type == "tts-end":
                 self._debug_print(f"TTS processing ended (ID: {response_id})")
                 if "tts_output" in event_data:
                     self._debug_print(f"TTS output: {event_data['tts_output']}")
+            elif event_type == "run-end":
+                self._debug_print(f"Run ended (ID: {response_id})")
             else:
                 self._debug_print(f"Unhandled event type: {event_type} (ID: {response_id})")
 
