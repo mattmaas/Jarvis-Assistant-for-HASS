@@ -159,11 +159,7 @@ class JarvisAssistant:
                 pcm = self.audio_stream.read(self.porcupine.frame_length)
                 pcm = struct.unpack_from("h" * self.porcupine.frame_length, pcm)
 
-                keyword_index = -1
-                if self.followup_requested:
-                    keyword_index = self.last_wakeword_index
-                else:
-                    keyword_index = self.porcupine.process(pcm)
+                keyword_index = self.porcupine.process(pcm)
                 
                 if keyword_index >= 0 and self.is_running:
                     self.last_wakeword_index = keyword_index
