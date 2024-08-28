@@ -172,7 +172,8 @@ class JarvisAssistant:
                         self._debug_print("Wake word 'Blueberry' detected")
                         self._play_chime()
                         self.rgb_control.set_mic_color((0, 0, 255))  # Set blue color
-                        self._process_speech(pipeline_id=self.config['BLUEBERRY']['PIPELINE_ID'])
+                        blueberry_pipeline_id = self.wake_words.get('blueberry', {}).get('id')
+                        self._process_speech(pipeline_id=blueberry_pipeline_id)
                     # Remove setting 'ice' profile here
 
         finally:
