@@ -403,6 +403,7 @@ class JarvisAssistant:
                     response = self._execute_local_command(cmd_type, command)
                     self._debug_print(f"Local command response: {response}")
                     conversation_signals.update_signal.emit(response, False)  # Update ModernUI with response
+                    self._handle_follow_up(pipeline_id)
                     return
 
             # If no local command matched, send to Home Assistant
@@ -416,6 +417,8 @@ class JarvisAssistant:
                 fallback_response = self._query_gpt4o_mini(f"Respond to this user query: {command}", max_tokens=150)
                 self._debug_print(f"Fallback response: {fallback_response}")
                 conversation_signals.update_signal.emit(fallback_response, False)
+            
+            self._handle_follow_up(pipeline_id)
         except Exception as e:
             error_message = f"Error executing command: {str(e)}"
             self._debug_print(error_message)
@@ -432,6 +435,22 @@ class JarvisAssistant:
             self._debug_print(f"Current voice: {self.current_voice}, Time left: {int(time_left)} seconds")
         else:
             self._debug_print("Using default voice")
+
+    def _handle_follow_up(self, pipeline_id):
+        self._debug_print("Preparing for potential follow-up...")
+        time.sleep(1)  # Short pause to ensure everything is clear from the last call
+        self.rgb_control.set_profile("ice")  # Reset to 'ice' profile
+        self._play_chime()
+        self.rgb_control.set_mic_color((128, 0, 128))  # Set to purple color for listening
+        self._debug_print("Listening for potential follow-up...")
+        
+        reply = self._listen_for_reply()
+        if reply:
+            self._debug_print(f"Follow-up detected: {reply}")
+            self._execute_command(reply, pipeline_id)
+        else:
+            self._debug_print("No follow-up detected. Returning to idle state.")
+            self.rgb_control.set_profile("ice")
 
     def _execute_local_command(self, cmd_type: str, command: str):
         self._debug_print(f"Executing local command: {cmd_type}")
