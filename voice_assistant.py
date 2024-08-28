@@ -1079,38 +1079,3 @@ class JarvisAssistant:
             self._debug_print("Reset RGB profile to 'ice'")
         return None
 
-    def _wait_for_speaker_idle(self):
-        max_wait_time = 60  # Maximum wait time in seconds
-        check_interval = 2  # Check every 2 seconds
-        start_time = time.time()
-
-        while time.time() - start_time < max_wait_time:
-            if self._is_speaker_idle():
-                return True
-            time.sleep(check_interval)
-
-        self._debug_print("Timed out waiting for speaker to become idle.")
-        self.followup_requested = False
-        return False
-
-    def _is_speaker_idle(self):
-        try:
-            self.message_id += 1
-            message = {
-                "id": self.message_id,
-                "type": "get_states",
-                "entity_ids": ["media_player.kitchen_display"]
-            }
-            self._send_websocket_message(message)
-            
-            response = self._receive_websocket_message()
-            if response and "result" in response:
-                state = response["result"][0]["state"]
-                self._debug_print(f"Speaker state: {state}")
-                return state == "idle"
-            else:
-                self._debug_print("Failed to get speaker state")
-                return False
-        except Exception as e:
-            self._debug_print(f"Error checking speaker state: {str(e)}")
-            return False
