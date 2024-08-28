@@ -489,22 +489,52 @@ class JarvisAssistant:
 
     def _query_gpt4o_mini(self, prompt: str, max_tokens: int = 50) -> str:
         try:
+            functions = [
+                {
+                    "name": "process_user_input",
+                    "description": "Process the user's input and generate an appropriate response",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "response": {
+                                "type": "string",
+                                "description": "The generated response to the user's input"
+                            },
+                            "expects_reply": {
+                                "type": "boolean",
+                                "description": "Whether the response expects a reply from the user"
+                            }
+                        },
+                        "required": ["response", "expects_reply"]
+                    }
+                }
+            ]
+
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
                 ],
+                functions=functions,
+                function_call={"name": "process_user_input"},
                 max_tokens=max_tokens,
                 n=1,
                 stop=None,
                 temperature=0.5,
-                user=self.conversation_id  # Pass the conversation ID here
+                user=self.conversation_id
             )
-            return response.choices[0].message.content.strip()
+
+            function_call = response.choices[0].message.function_call
+            if function_call and function_call.name == "process_user_input":
+                function_args = json.loads(function_call.arguments)
+                return function_args.get("response", ""), function_args.get("expects_reply", False)
+            else:
+                return response.choices[0].message.content.strip(), False
+
         except Exception as e:
             self._debug_print(f"Error querying GPT-4o-mini: {str(e)}")
-            return ""
+            return "", False
 
     def _send_confirmation_to_ha(self, confirmation: str):
         if not self.is_running:
@@ -702,7 +732,8 @@ class JarvisAssistant:
                                     self._process_events(current_message_id, events)
                                 
                                 # Check if the response expects an answer
-                                if self._response_expects_answer(response_text):
+                                response_text, expects_reply = self._query_gpt4o_mini(response_text, max_tokens=200)
+                                if expects_reply:
                                     self._debug_print("Response expects an answer. Listening for reply...")
                                     time.sleep(1)  # Wait for 1 second after the response finishes
                                     self._play_chime()
@@ -944,9 +975,9 @@ class JarvisAssistant:
             raise Exception(f"Error sending WebSocket message: {str(e)}")
 
     def _response_expects_answer(self, response_text):
-        prompt = f"Analyze this response and determine if it's expecting or asking for a reply from the user. Return only 'True' if it expects a reply, or 'False' if it doesn't: '{response_text}'"
-        result = self._query_gpt4o_mini(prompt, max_tokens=5)
-        return result.strip().lower() == 'true'
+        prompt = f"Analyze this response and determine if it's expecting or asking for a reply from the user: '{response_text}'"
+        _, expects_reply = self._query_gpt4o_mini(prompt, max_tokens=100)
+        return expects_reply
 
     def _listen_for_reply(self):
         recognizer = sr.Recognizer()
