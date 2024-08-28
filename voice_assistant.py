@@ -436,19 +436,20 @@ class JarvisAssistant:
             conversation_signals.update_signal.emit(error_message, False)  # Update ModernUI with error message
             result = error_message
         finally:
-            if self.is_running:
-                self.rgb_control.set_profile("ice")  # Reset to 'ice' profile only if still running
-            else:
-                self.rgb_control.set_mic_color((255, 69, 0))  # Maintain orange color if stopped
+            self.rgb_control.set_profile("ice")  # Always reset to 'ice' profile after processing
+            self._debug_print("Reset RGB profile to 'ice' after command execution")
 
-        # Check with 4o-mini if a followup reply is expected
+        # Check if a followup reply is expected
         if self._response_expects_answer(result):
-            self.followup_requested = True
-            self._debug_print("Follow-up requested. Waiting for speaker to be idle...")
-            self._wait_for_speaker_idle()
-            if self.followup_requested:  # Check again in case it was cancelled during waiting
-                self._debug_print("Speaker is idle. Listening for follow-up...")
-                self._listen_for_reply()
+            self._debug_print("Follow-up requested. Listening for reply...")
+            self.rgb_control.set_profile("ice")  # Reset to 'ice' profile before listening
+            reply = self._listen_for_reply()
+            if reply:
+                self._debug_print(f"User replied: {reply}")
+                # Process the reply as a new command
+                self._execute_command(reply, pipeline_id)
+            else:
+                self._debug_print("No valid reply received. Ending conversation.")
         
         # Debug print current voice information
         if self.current_voice:
