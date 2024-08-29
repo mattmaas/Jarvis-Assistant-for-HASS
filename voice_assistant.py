@@ -362,15 +362,19 @@ class JarvisAssistant:
                 self._debug_print("Voice reversion command detected. Reverting to default voice.")
                 return self.wake_words['jarvis']['id'], True
 
+            text_lower = text.lower()
+            words = text_lower.split()
+
             for pipeline_name, data in self.wake_words.items():
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
-                if any(keyword.lower() in text.lower() for keyword in keywords):
+                if any(keyword.lower() in text_lower for keyword in keywords) or \
+                   any(keyword.lower() in words for keyword in keywords):
                     self._debug_print(f"Keyword match: Voice changed to {data['name']}.")
                     if pipeline_name == 'blueberry' and self.use_blueberry_longterm:
                         self._debug_print("Using Blueberry's long-term conversation ID.")
                         self.conversation_id = self.blueberry_conversation_id
                     return data['id'], True
-            
+
             # If no voice is selected, use the default
             return self.wake_words['jarvis']['id'], False
         else:
