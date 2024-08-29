@@ -288,6 +288,7 @@ class JarvisAssistant:
         recognizer = sr.Recognizer()
         charlotte_pipeline_id = self.wake_words['blueberry']['id']
         charlotte_was_set = False
+        original_pipeline = self.ha_pipeline
 
         try:
             with sr.Microphone() as source:
@@ -313,12 +314,14 @@ class JarvisAssistant:
                             self.ha_pipeline = charlotte_pipeline_id
                             charlotte_was_set = True
                         
-                        self._execute_command(best_guess, pipeline_id)
+                        response = self._execute_command(best_guess, pipeline_id)
                         
-                        # Unset Charlotte pipeline if it was set
+                        # Unset Charlotte pipeline if it was set temporarily
                         if charlotte_was_set:
                             self._debug_print("Unsetting Charlotte pipeline")
-                            self.ha_pipeline = self.wake_words['jarvis']['id']  # Reset to default pipeline
+                            self.ha_pipeline = original_pipeline
+                        
+                        return response
                     else:
                         self._debug_print("Could not understand the command")
                 elif self.stt_provider == "whisper":
