@@ -356,7 +356,9 @@ class JarvisAssistant:
                 self._debug_print("Set RGB profile back to 'ice'")
 
     def _select_pipeline(self, text: str) -> tuple:
+        self._debug_print("def _select_pipeline(self, text: str) -> tuple")
         if self.ha_pipeline == "auto":
+            self._debug_print("if self.ha_pipeline == auto:")
             # Check for voice reversion commands
             if any(phrase in text.lower() for phrase in ["revert voice", "clear voice", "normal voice"]):
                 self._debug_print("Voice reversion command detected. Reverting to default voice.")
@@ -367,6 +369,7 @@ class JarvisAssistant:
 
             for pipeline_name, data in self.wake_words.items():
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
+                self._debug_print(keywords)
                 if any(keyword.lower() in text_lower for keyword in keywords) or \
                    any(keyword.lower() in words for keyword in keywords):
                     self._debug_print(f"Keyword match: Voice changed to {data['name']}.")
