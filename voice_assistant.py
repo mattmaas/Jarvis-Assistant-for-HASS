@@ -286,8 +286,8 @@ class JarvisAssistant:
 
     def _process_speech(self, pipeline_id=None):
         recognizer = sr.Recognizer()
+        default_pipeline = self.wake_words['jarvis']['id']
         original_pipeline = self.ha_pipeline
-        pipeline_was_changed = False
 
         try:
             with sr.Microphone() as source:
@@ -307,18 +307,16 @@ class JarvisAssistant:
                         best_guess = command['alternative'][0]['transcript']
                         self._debug_print(f"Command recognized: {best_guess}")
                         
-                        # Check if a specific pipeline is requested
-                        if pipeline_id and self.ha_pipeline != pipeline_id:
+                        # Set the pipeline for this command
+                        if pipeline_id:
                             self._debug_print(f"Setting pipeline to {pipeline_id}")
                             self.ha_pipeline = pipeline_id
-                            pipeline_was_changed = True
                         
                         response = self._execute_command(best_guess, self.ha_pipeline)
                         
-                        # Reset pipeline if it was changed
-                        if pipeline_was_changed:
-                            self._debug_print(f"Resetting pipeline to {original_pipeline}")
-                            self.ha_pipeline = original_pipeline
+                        # Always reset to default pipeline after command execution
+                        self._debug_print(f"Resetting pipeline to default (Jarvis)")
+                        self.ha_pipeline = default_pipeline
                         
                         return response
                     else:
