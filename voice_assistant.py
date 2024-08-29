@@ -286,9 +286,8 @@ class JarvisAssistant:
 
     def _process_speech(self, pipeline_id=None):
         recognizer = sr.Recognizer()
-        charlotte_pipeline_id = self.wake_words['blueberry']['id']
-        charlotte_was_set = False
         original_pipeline = self.ha_pipeline
+        pipeline_was_changed = False
 
         try:
             with sr.Microphone() as source:
@@ -308,17 +307,17 @@ class JarvisAssistant:
                         best_guess = command['alternative'][0]['transcript']
                         self._debug_print(f"Command recognized: {best_guess}")
                         
-                        # Check if Charlotte pipeline is not selected and blueberry wakeword is detected
-                        if pipeline_id == charlotte_pipeline_id and self.ha_pipeline != charlotte_pipeline_id:
-                            self._debug_print("Setting Charlotte pipeline")
-                            self.ha_pipeline = charlotte_pipeline_id
-                            charlotte_was_set = True
+                        # Check if a specific pipeline is requested
+                        if pipeline_id and self.ha_pipeline != pipeline_id:
+                            self._debug_print(f"Setting pipeline to {pipeline_id}")
+                            self.ha_pipeline = pipeline_id
+                            pipeline_was_changed = True
                         
-                        response = self._execute_command(best_guess, pipeline_id)
+                        response = self._execute_command(best_guess, self.ha_pipeline)
                         
-                        # Unset Charlotte pipeline if it was set temporarily
-                        if charlotte_was_set:
-                            self._debug_print("Unsetting Charlotte pipeline")
+                        # Reset pipeline if it was changed
+                        if pipeline_was_changed:
+                            self._debug_print(f"Resetting pipeline to {original_pipeline}")
                             self.ha_pipeline = original_pipeline
                         
                         return response
