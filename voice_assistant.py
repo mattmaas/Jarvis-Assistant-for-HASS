@@ -74,6 +74,10 @@ class JarvisAssistant:
         self.current_voice = None
         self.voice_change_time = time.time()  # Initialize with current time
         self.voice_duration = 300  # 5 minutes in seconds
+
+        # Blueberry long-term conversation
+        self.use_blueberry_longterm = self.config['BLUEBERRY'].getboolean('USE_LONGTERM_CONVERSATION', False)
+        self.blueberry_conversation_id = self.config['BLUEBERRY'].get('LONGTERM_CONVERSATION_ID', str(uuid.uuid4()))
         
         # Remove Flask server initialization
 
@@ -364,6 +368,9 @@ class JarvisAssistant:
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
                 if any(keyword in ' '.join(words) for keyword in keywords):
                     self._debug_print(f"Voice changed to {data['name']}.")
+                    if pipeline_name == 'blueberry' and self.use_blueberry_longterm:
+                        self._debug_print("Using Blueberry's long-term conversation ID.")
+                        self.conversation_id = self.blueberry_conversation_id
                     return data['id'], True
             
             # If no voice is selected, use the default
@@ -652,10 +659,16 @@ class JarvisAssistant:
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
         current_time = time.time()
-        if is_new_voice or (self.voice_change_time and current_time - self.voice_change_time > self.voice_duration):
+        
+        # Check if it's Blueberry and use long-term conversation ID if enabled
+        if pipeline_id == self.wake_words['blueberry']['id'] and self.use_blueberry_longterm:
+            self.conversation_id = self.blueberry_conversation_id
+            self._debug_print(f"Using Blueberry's long-term conversation ID: {self.conversation_id}")
+        elif is_new_voice or (self.voice_change_time and current_time - self.voice_change_time > self.voice_duration):
             self.conversation_id = str(uuid.uuid4())
             self._debug_print(f"New conversation ID generated: {self.conversation_id}")
             self.voice_change_time = current_time
+        
         self.last_request_time = current_time
         self.current_voice = pipeline_id
 
