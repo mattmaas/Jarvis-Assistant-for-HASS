@@ -499,10 +499,8 @@ class JarvisAssistant:
                 "type": "call_service",
                 "domain": "tts",
                 "service": "google_translate_say",
-                "target": {
-                    "entity_id": "media_player.kitchen_display"
-                },
                 "service_data": {
+                    "entity_id": "media_player.kitchen_display",
                     "message": message
                 }
             }
