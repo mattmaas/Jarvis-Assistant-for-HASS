@@ -357,33 +357,43 @@ class JarvisAssistant:
 
     def _select_pipeline(self, text: str) -> tuple:
         self._debug_print("def _select_pipeline(self, text: str) -> tuple")
-        if self.ha_pipeline == "auto":
-            self._debug_print("if self.ha_pipeline == auto:")
-            # Check for voice reversion commands
-            if any(phrase in text.lower() for phrase in ["revert voice", "clear voice", "normal voice"]):
-                self._debug_print("Voice reversion command detected. Reverting to default voice.")
-                return self.wake_words['jarvis']['id'], True
+        
+        # Check for voice reversion commands
+        if any(phrase in text.lower() for phrase in ["revert voice", "clear voice", "normal voice"]):
+            self._debug_print("Voice reversion command detected. Reverting to default voice.")
+            self.ha_pipeline = "auto"
+            return self.wake_words['jarvis']['id'], True
 
-            text_lower = text.lower()
-            words = text_lower.split()
+        text_lower = text.lower()
+        words = text_lower.split()
 
-            for pipeline_name, data in self.wake_words.items():
-                keywords = self.pipeline_keywords.get(pipeline_name, [])
-                self._debug_print(keywords)
-                if any(keyword.lower() in text_lower for keyword in keywords) or \
-                   any(keyword.lower() in words for keyword in keywords):
-                    self._debug_print(f"Keyword match: Voice changed to {data['name']}.")
-                    if pipeline_name == 'blueberry' and self.use_blueberry_longterm:
-                        self._debug_print("Using Blueberry's long-term conversation ID.")
-                        self.conversation_id = self.blueberry_conversation_id
-                    return data['id'], True
+        # Always check for keywords, regardless of current ha_pipeline value
+        for pipeline_name, data in self.wake_words.items():
+            keywords = self.pipeline_keywords.get(pipeline_name, [])
+            self._debug_print(keywords)
+            if any(keyword.lower() in text_lower for keyword in keywords) or \
+               any(keyword.lower() in words for keyword in keywords):
+                self._debug_print(f"Keyword match: Voice changed to {data['name']}.")
+                if pipeline_name == 'blueberry' and self.use_blueberry_longterm:
+                    self._debug_print("Using Blueberry's long-term conversation ID.")
+                    self.conversation_id = self.blueberry_conversation_id
+                self.ha_pipeline = data['id']
+                return data['id'], True
 
-            # If no voice is selected, use the default
+        # If no specific voice is selected and Jarvis wake word was used, reset to auto
+        if "jarvis" in text_lower or "jarvis" in words:
+            self._debug_print("Jarvis wake word detected. Resetting to auto mode.")
+            self.ha_pipeline = "auto"
             return self.wake_words['jarvis']['id'], False
-        else:
-            # Check if the manually selected pipeline is different from the current one
+
+        # If ha_pipeline is not "auto" and no keyword match, use the current pipeline
+        if self.ha_pipeline != "auto":
             is_new_voice = self.ha_pipeline != self.current_voice
             return self.ha_pipeline, is_new_voice
+
+        # Default case: use Jarvis
+        self._debug_print("No specific voice selected. Using default (Jarvis).")
+        return self.wake_words['jarvis']['id'], False
 
     def _handle_home_assistant_error(self, error_message: str, current_message_id: int):
         self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
