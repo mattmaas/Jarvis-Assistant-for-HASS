@@ -336,25 +336,27 @@ class JarvisAssistant:
                 self.rgb_control.set_profile("ice")  # Always set back to 'ice' profile after processing
                 self._debug_print("Set RGB profile back to 'ice'")
 
-    def _select_pipeline(self, text: str) -> str:
+    def _select_pipeline(self, text: str) -> tuple:
         if self.ha_pipeline == "auto":
             words = text.lower().split()
             
             # Check for voice reversion commands
             if any(phrase in text.lower() for phrase in ["revert voice", "clear voice", "normal voice"]):
                 self._debug_print("Voice reversion command detected. Reverting to default voice.")
-                return self.wake_words['jarvis']['id']
-            
+                return self.wake_words['jarvis']['id'], True
+
             for pipeline_name, data in self.wake_words.items():
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
                 if any(keyword in ' '.join(words) for keyword in keywords):
                     self._debug_print(f"Voice changed to {data['name']}.")
-                    return data['id']
+                    return data['id'], True
             
             # If no voice is selected, use the default
-            return self.wake_words['jarvis']['id']
+            return self.wake_words['jarvis']['id'], False
         else:
-            return self.ha_pipeline  # Return the manually selected pipeline ID
+            # Check if the manually selected pipeline is different from the current one
+            is_new_voice = self.ha_pipeline != self.current_voice
+            return self.ha_pipeline, is_new_voice
 
     def _handle_home_assistant_error(self, error_message: str, current_message_id: int):
         self._debug_print(f"Error from Home Assistant: {error_message} (ID: {current_message_id})")
@@ -632,6 +634,13 @@ class JarvisAssistant:
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
         retry_delay = 5  # seconds
+
+        pipeline_id, is_new_voice = self._select_pipeline(command)
+        if is_new_voice or time.time() - self.last_request_time > self.conversation_timeout:
+            self.conversation_id = str(uuid.uuid4())
+            self._debug_print(f"New conversation ID generated: {self.conversation_id}")
+        self.last_request_time = time.time()
+        self.current_voice = pipeline_id
 
         for attempt in range(max_retries):
             try:
