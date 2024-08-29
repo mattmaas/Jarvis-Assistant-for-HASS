@@ -357,8 +357,6 @@ class JarvisAssistant:
 
     def _select_pipeline(self, text: str) -> tuple:
         if self.ha_pipeline == "auto":
-            words = text.lower().split()
-            
             # Check for voice reversion commands
             if any(phrase in text.lower() for phrase in ["revert voice", "clear voice", "normal voice"]):
                 self._debug_print("Voice reversion command detected. Reverting to default voice.")
@@ -366,8 +364,8 @@ class JarvisAssistant:
 
             for pipeline_name, data in self.wake_words.items():
                 keywords = self.pipeline_keywords.get(pipeline_name, [])
-                if any(keyword in ' '.join(words) for keyword in keywords):
-                    self._debug_print(f"Voice changed to {data['name']}.")
+                if any(keyword.lower() in text.lower() for keyword in keywords):
+                    self._debug_print(f"Keyword match: Voice changed to {data['name']}.")
                     if pipeline_name == 'blueberry' and self.use_blueberry_longterm:
                         self._debug_print("Using Blueberry's long-term conversation ID.")
                         self.conversation_id = self.blueberry_conversation_id
