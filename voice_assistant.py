@@ -286,6 +286,9 @@ class JarvisAssistant:
 
     def _process_speech(self, pipeline_id=None):
         recognizer = sr.Recognizer()
+        charlotte_pipeline_id = self.wake_words['blueberry']['id']
+        charlotte_was_set = False
+
         try:
             with sr.Microphone() as source:
                 self._debug_print("Listening for command...")
@@ -303,7 +306,19 @@ class JarvisAssistant:
                     if command:
                         best_guess = command['alternative'][0]['transcript']
                         self._debug_print(f"Command recognized: {best_guess}")
+                        
+                        # Check if Charlotte pipeline is not selected and blueberry wakeword is detected
+                        if pipeline_id == charlotte_pipeline_id and self.ha_pipeline != charlotte_pipeline_id:
+                            self._debug_print("Setting Charlotte pipeline")
+                            self.ha_pipeline = charlotte_pipeline_id
+                            charlotte_was_set = True
+                        
                         self._execute_command(best_guess, pipeline_id)
+                        
+                        # Unset Charlotte pipeline if it was set
+                        if charlotte_was_set:
+                            self._debug_print("Unsetting Charlotte pipeline")
+                            self.ha_pipeline = self.wake_words['jarvis']['id']  # Reset to default pipeline
                     else:
                         self._debug_print("Could not understand the command")
                 elif self.stt_provider == "whisper":
