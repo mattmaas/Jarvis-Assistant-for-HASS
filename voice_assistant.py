@@ -72,7 +72,7 @@ class JarvisAssistant:
 
         # Voice change tracking
         self.current_voice = None
-        self.voice_change_time = None
+        self.voice_change_time = time.time()  # Initialize with current time
         self.voice_duration = 300  # 5 minutes in seconds
         
         # Remove Flask server initialization
@@ -651,10 +651,12 @@ class JarvisAssistant:
         retry_delay = 5  # seconds
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
-        if is_new_voice or time.time() - self.last_request_time > self.conversation_timeout:
+        current_time = time.time()
+        if is_new_voice or (self.voice_change_time and current_time - self.voice_change_time > self.voice_duration):
             self.conversation_id = str(uuid.uuid4())
             self._debug_print(f"New conversation ID generated: {self.conversation_id}")
-        self.last_request_time = time.time()
+            self.voice_change_time = current_time
+        self.last_request_time = current_time
         self.current_voice = pipeline_id
 
         for attempt in range(max_retries):
