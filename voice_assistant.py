@@ -669,6 +669,7 @@ class JarvisAssistant:
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
         retry_delay = 5  # seconds
+        overall_timeout = 360  # seconds
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
         current_time = time.time()
@@ -684,16 +685,14 @@ class JarvisAssistant:
         self.last_request_time = current_time
         self.current_voice = pipeline_id
 
-        for attempt in range(max_retries):
+        start_time = time.time()
+        while time.time() - start_time < overall_timeout:
             try:
                 with self.ws_lock:
                     if not self.ws or not self.ws.connected:
-                        self._debug_print(f"WebSocket not connected. Attempting to reconnect... (Attempt {attempt + 1}/{max_retries})")
+                        self._debug_print("WebSocket not connected. Attempting to reconnect...")
                         if not self._connect_to_home_assistant():
-                            if attempt == max_retries - 1:
-                                return "Failed to establish WebSocket connection. Please try again later."
-                            time.sleep(retry_delay)
-                            continue
+                            raise Exception("Failed to establish WebSocket connection")
 
                     self.message_id += 1
                     current_message_id = self.message_id
@@ -712,118 +711,91 @@ class JarvisAssistant:
                     self.request_logger.debug(f"Raw request to Home Assistant: {json.dumps(message)}")
                     self.ws.send(json.dumps(message))
                 
-                    events = []
-                    timeout = 120  # Increased timeout to 120 seconds
-                    start_time = time.time()
-                    tts_url = None
-                    tts_end_received = False
-                    final_result_received = False
-                    response_text = ""
+                events = []
+                tts_url = None
+                tts_end_received = False
+                final_result_received = False
+                response_text = ""
+                
+                while time.time() - start_time < overall_timeout:
+                    try:
+                        self.ws.settimeout(10)  # Set a 10-second timeout for each receive operation
+                        response_raw = self.ws.recv()
+                        self._debug_print(f"Received raw response: {response_raw}")
+                        response = json.loads(response_raw)
+                        self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
                     
-                    while True:
-                        if time.time() - start_time > timeout:
-                            return "Timeout waiting for response from Home Assistant. Please try again."
+                        if response.get("id") != current_message_id:
+                            self._debug_print(f"Received response for a different message ID: {response.get('id')}")
+                            continue
 
-                        try:
-                            response_raw = self.ws.recv()
-                            self._debug_print(f"Received raw response: {response_raw}")
-                            response = json.loads(response_raw)
-                            self._debug_print(f"Parsed response: {json.dumps(response, indent=2)}")
-                        
-                            if response.get("id") != current_message_id:
-                                self._debug_print(f"Received response for a different message ID: {response.get('id')}")
-                                continue
-
-                            if response.get("type") == "event":
-                                events.append(response)
-                                event_data = response.get("event", {}).get("data", {})
-                                event_type = response.get("event", {}).get("type")
-                                
-                                if event_type == "intent-end":
-                                    speech = event_data.get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
-                                    if speech:
-                                        self._debug_print(f"Extracted speech from intent-end: {speech}")
-                                        response_text = speech
-                                        conversation_signals.update_signal.emit(command, True)  # Emit user's command
-                                        conversation_signals.update_signal.emit(response_text, False)  # Emit Jarvis's response
-                                        self._debug_print(f"User command: {command}")
-                                        self._debug_print(f"Jarvis response: {response_text}")
-                                
-                                elif event_type == "tts-end":
-                                    tts_output = event_data.get("tts_output", {})
-                                    tts_url = tts_output.get("url")
-                                    if tts_url:
-                                        self._debug_print(f"Found TTS URL: {tts_url}")
-                                        full_tts_url = f"{self.ha_url}{tts_url}"
-                                        self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
-                                        self._play_audio_on_kitchen_speaker(full_tts_url)
-                                    tts_end_received = True
-                                
-                                elif event_type == "run-end":
-                                    final_result_received = True
-
-                                elif event_type == "error":
-                                    error_message = event_data.get("message", "Unknown error")
-                                    self._debug_print(f"Error event received: {error_message}")
-                                    return f"Error from Home Assistant: {error_message}"
-
-                            elif response.get("type") == "result":
-                                if not response.get("success"):
-                                    error = response.get("error", {})
-                                    error_message = error.get("message", "Unknown error")
-                                    self._debug_print(f"Error result received: {error_message}")
-                                    return f"Error from Home Assistant: {error_message}"
+                        if response.get("type") == "event":
+                            events.append(response)
+                            event_data = response.get("event", {}).get("data", {})
+                            event_type = response.get("event", {}).get("type")
+                            
+                            if event_type == "intent-end":
+                                speech = event_data.get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
+                                if speech:
+                                    self._debug_print(f"Extracted speech from intent-end: {speech}")
+                                    response_text = speech
+                                    conversation_signals.update_signal.emit(command, True)  # Emit user's command
+                                    conversation_signals.update_signal.emit(response_text, False)  # Emit Jarvis's response
+                                    self._debug_print(f"User command: {command}")
+                                    self._debug_print(f"Jarvis response: {response_text}")
+                            
+                            elif event_type == "tts-end":
+                                tts_output = event_data.get("tts_output", {})
+                                tts_url = tts_output.get("url")
+                                if tts_url:
+                                    self._debug_print(f"Found TTS URL: {tts_url}")
+                                    full_tts_url = f"{self.ha_url}{tts_url}"
+                                    self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
+                                    self._play_audio_on_kitchen_speaker(full_tts_url)
+                                tts_end_received = True
+                            
+                            elif event_type == "run-end":
                                 final_result_received = True
 
-                            if response.get("type") == "event":
-                                event_type = response.get("event", {}).get("type")
-                                if event_type == "run-end":
-                                    final_result_received = True
-                                elif event_type == "tts-end":
-                                    tts_end_received = True
-                                    tts_output = response.get("event", {}).get("data", {}).get("tts_output", {})
-                                    tts_url = tts_output.get("url")
-                                    if tts_url:
-                                        self._debug_print(f"Found TTS URL: {tts_url}")
-                                        full_tts_url = f"{self.ha_url}{tts_url}"
-                                        self._debug_print(f"Playing audio on kitchen speaker: {full_tts_url}")
-                                        self._play_audio_on_kitchen_speaker(full_tts_url)
-                                elif event_type == "intent-end":
-                                    speech = response.get("event", {}).get("data", {}).get("intent_output", {}).get("response", {}).get("speech", {}).get("plain", {}).get("speech")
-                                    if speech:
-                                        self._debug_print(f"Extracted speech from intent-end: {speech}")
-                                        response_text = speech
-                                        conversation_signals.update_signal.emit(command, True)  # Emit user's command
-                                        conversation_signals.update_signal.emit(response_text, False)  # Emit Jarvis's response
-                                        self._debug_print(f"User command: {command}")
-                                        self._debug_print(f"Jarvis response: {response_text}")
+                            elif event_type == "error":
+                                error_message = event_data.get("message", "Unknown error")
+                                self._debug_print(f"Error event received: {error_message}")
+                                return f"Error from Home Assistant: {error_message}"
 
-                            if response_text and tts_end_received and final_result_received:
-                                self._debug_print("Received response text, TTS end event, and final result. Processing complete.")
-                                if events:
-                                    self._process_events(current_message_id, events)
-                                
-                                return response_text
+                        elif response.get("type") == "result":
+                            if not response.get("success"):
+                                error = response.get("error", {})
+                                error_message = error.get("message", "Unknown error")
+                                self._debug_print(f"Error result received: {error_message}")
+                                return f"Error from Home Assistant: {error_message}"
+                            final_result_received = True
 
-                        except websocket.WebSocketException as e:
-                            self._debug_print(f"WebSocket error while receiving: {str(e)}")
-                            break
+                        if response_text and tts_end_received and final_result_received:
+                            self._debug_print("Received response text, TTS end event, and final result. Processing complete.")
+                            if events:
+                                self._process_events(current_message_id, events)
+                            
+                            return response_text
 
-            except websocket.WebSocketException as e:
-                self._debug_print(f"WebSocket error: {str(e)}")
-            except json.JSONDecodeError:
-                self._debug_print("Received invalid JSON response from Home Assistant")
+                    except websocket.WebSocketTimeoutException:
+                        self._debug_print("Timeout while waiting for response, continuing to next iteration")
+                        continue
+                    except websocket.WebSocketException as e:
+                        self._debug_print(f"WebSocket error while receiving: {str(e)}")
+                        break
+
+                self._debug_print("Timeout reached while processing response")
+                return "Timeout waiting for complete response from Home Assistant. Please try again."
+
             except Exception as e:
-                self._debug_print(f"Error sending command to Home Assistant: {str(e)}")
+                self._debug_print(f"Error in communication with Home Assistant: {str(e)}")
+                if time.time() - start_time + retry_delay < overall_timeout:
+                    self._debug_print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    break
 
-            self._debug_print(f"Attempting to reconnect... (Attempt {attempt + 1}/{max_retries})")
-            self._reconnect_to_home_assistant()
-
-            if attempt < max_retries - 1:
-                self._debug_print(f"Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                return "Failed to send command after multiple attempts. Please try again later."
+        return "Failed to get a complete response from Home Assistant after multiple attempts. Please try again later."
 
     def _play_audio_on_kitchen_speaker(self, tts_url):
         max_retries = 3
