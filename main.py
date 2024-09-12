@@ -38,10 +38,9 @@ class AssistantThread(threading.Thread):
             debug_signals.debug_signal.emit(f"Error in assistant thread: {e}")
 
 def main():
-    global assistant, modern_ui
     app = QApplication(sys.argv)
     
-    # Create the Jarvis assistant with the config path and increased sensitivity
+    # Create the Jarvis assistant with the config path
     assistant = JarvisAssistant(CONFIG_PATH, logger)
     
     # Create the debug window
@@ -209,15 +208,11 @@ def main():
     stop_action.triggered.connect(lambda: QTimer.singleShot(0, assistant.stop))
     debug_action.triggered.connect(debug_window.show)
     def restart_assistant():
-        global assistant
-        debug_signals.debug_signal.emit("Restarting assistant...")
+        debug_signals.debug_signal.emit("Restarting application...")
         assistant.stop()
         time.sleep(1)  # Give some time for the assistant to stop
-        assistant = JarvisAssistant(CONFIG_PATH, sensitivity=0.7)  # Create a new instance
-        update_ha_pipelines()  # Update pipelines after creating new instance
-        assistant_thread = AssistantThread(assistant)
-        assistant_thread.start()
-        debug_signals.debug_signal.emit("Assistant restarted")
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
     restart_action.triggered.connect(restart_assistant)
     exit_action.triggered.connect(lambda: (assistant.rgb_control.set_profile("lava"), app.quit()))
