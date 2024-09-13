@@ -978,6 +978,9 @@ class JarvisAssistant:
         """
         self._debug_print(f"Preparing to type string: {text}")
         try:
+            if isinstance(text, tuple):
+                text = text[0]  # Use the first element of the tuple
+            text = str(text)  # Convert to string to handle non-string inputs
             self._debug_print(f"Typing string: {text}")
             pyautogui.write(text, interval=0.05)  # Set delay to 50 milliseconds between characters
             self._debug_print("String typed successfully")
