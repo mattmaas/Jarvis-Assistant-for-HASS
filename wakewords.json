@@ -4,7 +4,7 @@
     "name": "Jarvis",
     "keywords": [ "jarvis", "assistant" ]
   },
-  "arthur": {
+  "bumblebee": {
     "id": "01j1kh900aqb7n37tpj8r6n7m8",
     "name": "Arthur",
     "keywords": [ "arthur", "bumblebee" ]
@@ -29,7 +29,7 @@
     "name": "Jarvis 4o mini",
     "keywords": [ "mini", "quick", "quickly" ]
   },
-  "charlotte": {
+  "blueberry": {
     "id": "01j6dks8vhtf4egxhqz6jd56dt",
     "name": "Charlotte",
     "keywords": [ "blueberry", "berry", "blue", "charlotte", "therapist" ]
