@@ -4,32 +4,32 @@
     "name": "Jarvis",
     "keywords": [ "jarvis", "assistant" ]
   },
-  "bumblebee": {
+  "arthur": {
     "id": "01j1kh900aqb7n37tpj8r6n7m8",
     "name": "Arthur",
     "keywords": [ "arthur", "bumblebee" ]
   },
-  "porcupine": {
+  "vader": {
     "id": "01j50ghswc241weadn0csavaxn",
-    "name": "Vader",
+    "name": "Darth Vader",
     "keywords": [ "vader", "dark lord", "lord", "darth", "dark vader" ]
   },
-  "computer": {
+  "professor": {
     "id": "01j50gmjd83jbagext5ngzxc8d",
     "name": "Professor",
     "keywords": [ "professor", "teacher", "expert", "mister", "lesson"]
   },
-  "grasshopper": {
+  "jimmy": {
     "id": "01j50gqrmxvtay9wzw0tbx0mrm",
     "name": "Jimmy",
     "keywords": [ "jimmy", "grasshopper", "comedian", "joke", "roast"]
   },
-  "gpt4o_mini": {
+  "jarvis_4o_mini": {
     "id": "01j5t1m5qzz6s9gghx80p5y9q1",
     "name": "Jarvis 4o mini",
     "keywords": [ "mini", "quick", "quickly" ]
   },
-  "blueberry": {
+  "charlotte": {
     "id": "01j6dks8vhtf4egxhqz6jd56dt",
     "name": "Charlotte",
     "keywords": [ "blueberry", "berry", "blue", "charlotte", "therapist" ]
