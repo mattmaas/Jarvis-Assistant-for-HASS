@@ -51,6 +51,8 @@ Building on the Agent Zero framework (https://github.com/mattmaas/fastAPI-for-ag
 - **Tool Creation and Usage**: Dynamically create and use tools as needed for tasks.
 - **Enhanced Multi-Agent Cooperation**: Utilize a sophisticated system of AI agents for complex problem-solving.
 
+**Note**: The Agent Zero framework must be running separately for Jarvis to utilize these features.
+
 ### Extended OpenAI Conversation Capabilities
 
 Incorporating advanced features from the Extended OpenAI Conversation project (https://github.com/mattmaas/extended_openai_conversation):
@@ -58,6 +60,17 @@ Incorporating advanced features from the Extended OpenAI Conversation project (h
 - **Enhanced API Interactions**: Improved handling of API calls for complex and longer interactions.
 - **Advanced Error Handling**: Robust error management for smooth operation in various scenarios.
 - **Customizable Functions**: Define and use custom functions to expand Jarvis's interaction capabilities.
+
+**Important**: The Extended OpenAI Conversation project needs to be operational for Jarvis to access these advanced capabilities.
+
+## Prerequisites
+
+Before running Jarvis, ensure that the following projects are up and running:
+
+1. Agent Zero Framework: Follow the setup instructions at https://github.com/mattmaas/fastAPI-for-agent-zero-docker
+2. Extended OpenAI Conversation: Set up as per the guidelines at https://github.com/mattmaas/extended_openai_conversation
+
+Jarvis is designed to integrate with these projects, and full functionality depends on their availability.
 
 ## Open-Source Foundation
 
