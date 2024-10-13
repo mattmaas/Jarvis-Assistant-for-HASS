@@ -1,52 +1,75 @@
-# Jarvis: Your Ultimate Voice-Controlled Smart Home Assistant
+# Jarvis: Your Advanced AI Research Assistant and Conversationalist
 
-Welcome to Jarvis, the cutting-edge voice assistant that revolutionizes your smart home experience. Seamlessly blending advanced AI technology with intuitive voice control, Jarvis brings your home to life like never before.
+Welcome to Jarvis, a cutting-edge voice assistant that revolutionizes your interaction with AI technology. Seamlessly blending advanced language models with intuitive voice control, Jarvis brings a new level of intelligence to your daily life.
 
-## Unleash the Power of Your Voice
+## Unleash the Power of AI Conversation
 
-Jarvis isn't just another voice assistant – it's your personal AI-powered home conductor. With the simple wake word "Jarvis," you unlock a world of possibilities:
+Jarvis isn't just another voice assistant – it's your personal AI-powered research companion and conversationalist. With the simple wake word "Jarvis," you unlock a world of possibilities:
 
-- **Effortless Smart Home Control**: Command your entire smart home ecosystem with natural language. From adjusting lights to setting the perfect temperature, Jarvis understands and executes your wishes instantly. Leveraging the full power of Home Assistant's vast ecosystem, Jarvis seamlessly integrates with Home Assistant's Assist pipelines, allowing for complex automations and interactions with all your smart devices.
+- **AI-Powered Conversations**: Powered by OpenAI's cutting-edge language models, Jarvis engages in natural, context-aware conversations. It's not just following commands; it's understanding your intent and providing insightful responses.
 
-- **AI-Powered Conversations**: Powered by OpenAI's cutting-edge language models, Jarvis engages in natural, context-aware conversations. It's not just following commands; it's understanding your intent.
+- **Advanced Research Capabilities**: Jarvis can assist with complex research tasks, providing information on a wide range of topics, summarizing articles, and even helping with data analysis.
 
-- **Stunning RGB Lighting Effects**: Transform your space with vibrant, mood-enhancing lighting. Jarvis's OpenRGB integration lets you create the perfect ambiance for any occasion, all with a simple voice command.
+- **Natural Language Processing**: Communicate with Jarvis using natural language. It understands context, nuances, and can even pick up on subtle cues in your speech.
 
-- **Crystal-Clear Voice Feedback**: Experience responses like never before with high-quality audio feedback. Jarvis's voice is not just functional; it's a pleasure to listen to.
+- **Personalized Learning**: Jarvis adapts to your interests and learning style, providing tailored information and recommendations over time.
 
-## Auto Interpreter Mode for Voice Pipelines
+- **Multi-modal Interaction**: Interact with Jarvis through voice, text, or even integrate it with your smart devices for a seamless experience across different platforms.
 
-Jarvis starts in auto interpreter mode by default for voice pipelines. This intelligent feature automatically selects the most appropriate pipeline based on the content of your voice command. Here's how it works:
+## Beyond Conversation: Your Intelligent Assistant
 
-1. When you give a voice command, Jarvis analyzes the content of your speech.
-2. Based on keywords and context, it selects the most suitable Home Assistant Assist pipeline to process your request.
-3. This allows for more flexible and context-aware responses, as different pipelines can be optimized for various types of commands (e.g., smart home control, information queries, or complex tasks).
-
-You can still manually select a specific pipeline if needed, but the auto interpreter mode ensures that Jarvis adapts to your diverse needs without requiring explicit pipeline selection for each command.
-
-## Beyond Voice: Your Personal Computer Assistant
-
-Jarvis goes beyond smart home control. It's your intelligent computer companion:
+Jarvis goes beyond just being a conversationalist. It's your intelligent digital companion:
 
 - **Effortless Typing**: Dictate emails, messages, or documents with incredible accuracy. Jarvis types for you, saving time and effort.
 
-- **Quick File Access**: Launch applications or open files with a simple voice command. No more digging through folders – just ask Jarvis.
+- **Quick Information Retrieval**: Get instant answers to your questions or access to information without the need to manually search.
 
-- **Custom Shortcuts**: Create personalized voice shortcuts for your most common computer tasks. Boost your productivity with tailored voice commands.
+- **Task Automation**: Set up custom voice commands to automate repetitive tasks on your computer or connected devices.
 
-## Endless Possibilities with Open-Source Flexibility
+- **Language Translation**: Break down language barriers with Jarvis's built-in translation capabilities.
+
+## Integrations and Extensibility
+
+Jarvis is designed to be highly extensible and can integrate with various systems:
+
+- **Home Assistant Integration**: While primarily focused on AI conversation and research, Jarvis can also connect to Home Assistant for basic smart home control capabilities.
+
+- **Custom API Integrations**: Easily extend Jarvis's capabilities by integrating with external APIs and services.
+
+## Advanced AI Framework Integration
+
+Jarvis leverages cutting-edge AI technologies to enhance its capabilities:
+
+### Integration with Agent Zero Framework
+
+Jarvis incorporates features from the Agent Zero framework (https://github.com/mattmaas/fastAPI-for-agent-zero-docker), including:
+
+- **Dynamic Task Handling**: Jarvis can break down complex tasks into subtasks and manage them efficiently.
+- **Persistent Memory**: Jarvis retains information from previous interactions, allowing for more contextual and personalized responses over time.
+- **Tool Creation and Usage**: Jarvis can dynamically create and use tools as needed to accomplish tasks.
+- **Multi-Agent Cooperation**: For complex queries, Jarvis can utilize a system of cooperating AI agents to provide comprehensive solutions.
+
+### Extended OpenAI Conversation Capabilities
+
+Jarvis also integrates advanced features from the Extended OpenAI Conversation project (https://github.com/mattmaas/extended_openai_conversation), including:
+
+- **Enhanced API Interactions**: Improved handling of API calls, allowing for more complex and longer interactions without timeouts.
+- **Advanced Error Handling**: Robust error management ensures smooth operation even when dealing with complex queries or system interactions.
+- **Customizable Functions**: Ability to define and use custom functions, expanding Jarvis's capabilities to interact with various systems and data sources.
+
+## Open-Source Foundation
 
 Jarvis is built on an open-source foundation, making it infinitely extensible:
 
 - **Custom Integrations**: Easily add new functionalities or integrate with your favorite services.
 - **Community-Driven Development**: Benefit from a growing ecosystem of plugins and extensions.
-- **Tailored to Your Needs**: Modify and adapt Jarvis to fit your unique smart home setup.
+- **Tailored to Your Needs**: Modify and adapt Jarvis to fit your unique requirements and use cases.
 
-## Experience the Future of Smart Home Control
+## Experience the Future of AI Assistance
 
-Jarvis isn't just a voice assistant; it's a gateway to a more intuitive, efficient, and enjoyable smart home experience. Say goodbye to fumbling with apps or remotes – with Jarvis, your voice is all you need to command your digital kingdom.
+Jarvis isn't just a voice assistant; it's a gateway to a more intelligent, efficient, and enjoyable interaction with AI technology. Whether you're conducting research, seeking information, or simply engaging in thought-provoking conversation, Jarvis is your ideal AI companion.
 
-Ready to transform your home into an AI-powered oasis? Step into the future of smart living!
+Ready to elevate your AI interaction experience? Step into the future with Jarvis!
 
 ## Usage
 
