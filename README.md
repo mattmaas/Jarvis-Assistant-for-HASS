@@ -65,12 +65,13 @@ Incorporating advanced features from the Extended OpenAI Conversation project (h
 
 ## Prerequisites
 
-Before running Jarvis, ensure that the following projects are up and running:
+Before running Jarvis, ensure that the following projects and software are up and running:
 
 1. Agent Zero Framework: Follow the setup instructions at https://github.com/mattmaas/fastAPI-for-agent-zero-docker
 2. Extended OpenAI Conversation: Set up as per the guidelines at https://github.com/mattmaas/extended_openai_conversation
+3. Home Assistant: Install and configure Home Assistant. Visit https://www.home-assistant.io/installation/ for installation instructions.
 
-Jarvis is designed to integrate with these projects, and full functionality depends on their availability.
+Jarvis is designed to integrate with these projects and software, and full functionality depends on their availability. The Home Assistant integration is crucial for Jarvis's smart home control capabilities.
 
 ## Open-Source Foundation
 
