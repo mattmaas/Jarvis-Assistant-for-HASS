@@ -60,13 +60,13 @@ class JarvisAssistant:
         self.debug_signals = debug_signals
         self.last_ping_time = 0
         self.ping_interval = 50  # Send a ping every 50 seconds
-        self.reconnect_interval = 300  # Try to reconnect every 5 minutes if disconnected
+        self.reconnect_interval = 600  # Try to reconnect every 10 minutes if disconnected
         self.conversation_id = str(uuid.uuid4())  # Generate a unique conversation ID
         self.last_request_time = time.time()  # Initialize last request time
-        self.conversation_timeout = 300  # 5 minutes in seconds
+        self.conversation_timeout = 1200  # 20 minutes in seconds
         self.reconnect_attempts = 0
-        self.max_reconnect_attempts = 5
-        self.base_reconnect_delay = 60  # Base delay of 1 minute
+        self.max_reconnect_attempts = 10  # Increased max attempts
+        self.base_reconnect_delay = 300  # Base delay of 5 minutes
         # Get the directory of the current script
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -261,7 +261,7 @@ class JarvisAssistant:
             return False
 
         retry_delay = self.base_reconnect_delay * (2 ** (self.reconnect_attempts - 1))
-        retry_delay = min(retry_delay, 3600)  # Cap at 1 hour
+        retry_delay = min(retry_delay, 7200)  # Cap at 2 hours
         jitter = random.uniform(0.8, 1.2)
         retry_delay = int(retry_delay * jitter)
 
@@ -669,7 +669,7 @@ class JarvisAssistant:
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
         retry_delay = 5  # seconds
-        overall_timeout = 600  # seconds (10 minutes)
+        overall_timeout = 1800  # seconds (30 minutes)
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
         current_time = time.time()
