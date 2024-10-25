@@ -669,7 +669,7 @@ class JarvisAssistant:
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
         retry_delay = 5  # seconds
-        overall_timeout = 360  # seconds
+        overall_timeout = 600  # seconds (10 minutes)
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
         current_time = time.time()
@@ -719,7 +719,7 @@ class JarvisAssistant:
                 
                 while time.time() - start_time < overall_timeout:
                     try:
-                        self.ws.settimeout(10)  # Set a 10-second timeout for each receive operation
+                        self.ws.settimeout(300)  # Set a 5-minute timeout for each receive operation
                         response_raw = self.ws.recv()
                         self._debug_print(f"Received raw response: {response_raw}")
                         response = json.loads(response_raw)
@@ -937,7 +937,7 @@ class JarvisAssistant:
                 self.ws.send(json.dumps(service_call))
 
             # Wait for the response with a timeout
-            timeout = 5  # 5 seconds timeout
+            timeout = 300  # 5-minute timeout
             self.ws.settimeout(timeout)
             try:
                 response_raw = self.ws.recv()
@@ -996,7 +996,7 @@ class JarvisAssistant:
     def _send_websocket_message(self, message):
         try:
             self.ws.send(json.dumps(message))
-            timeout = 10  # 10 seconds timeout
+            timeout = 300  # 5-minute timeout
             self.ws.settimeout(timeout)
             response_raw = self.ws.recv()
             response = json.loads(response_raw)
