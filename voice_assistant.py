@@ -868,7 +868,7 @@ class JarvisAssistant:
                 ws_protocol = "wss://" if self.ha_url.startswith("https://") else "ws://"
                 ws_url = f"{ws_protocol}{self.ha_url.split('://', 1)[1]}/api/websocket"
                 self._debug_print(f"Attempting to connect to Home Assistant at {ws_url}")
-                self.ws = websocket.create_connection(ws_url, timeout=10)
+                self.ws = websocket.create_connection(ws_url, timeout=300)  # 5-minute connection timeout
                 
                 # Wait for auth_required message
                 auth_required = json.loads(self.ws.recv())
