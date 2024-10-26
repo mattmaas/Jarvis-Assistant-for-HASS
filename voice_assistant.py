@@ -669,7 +669,7 @@ class JarvisAssistant:
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
         retry_delay = 5  # seconds
-        overall_timeout = 1800  # seconds (30 minutes)
+        overall_timeout = 900  # seconds (15 minutes)
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
         current_time = time.time()
