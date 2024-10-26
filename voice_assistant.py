@@ -669,7 +669,7 @@ class JarvisAssistant:
     def _send_to_home_assistant(self, command, pipeline_id):
         max_retries = 3
         retry_delay = 5  # seconds
-        overall_timeout = 900  # seconds (15 minutes)
+        overall_timeout = 900  # seconds (15 minutes) - keeping this value
 
         pipeline_id, is_new_voice = self._select_pipeline(command)
         current_time = time.time()
@@ -717,10 +717,10 @@ class JarvisAssistant:
                 final_result_received = False
                 response_text = ""
                 
-                initial_period = 90  # First 1.5 minutes in seconds
+                initial_period = 100  # First 100 seconds
                 while time.time() - start_time < overall_timeout:
                     elapsed_time = time.time() - start_time
-                    check_interval = 20 if elapsed_time <= initial_period else 30  # 20s for first 1.5min, then 30s
+                    check_interval = 20 if elapsed_time <= initial_period else 30  # 20s for first 100s, then 30s
                     try:
                         self.ws.settimeout(check_interval)  # Set timeout to check interval
                         response_raw = self.ws.recv()
