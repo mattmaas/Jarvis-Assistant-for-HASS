@@ -717,9 +717,10 @@ class JarvisAssistant:
                 final_result_received = False
                 response_text = ""
                 
+                check_interval = 10  # Check every 10 seconds
                 while time.time() - start_time < overall_timeout:
                     try:
-                        self.ws.settimeout(300)  # Set a 5-minute timeout for each receive operation
+                        self.ws.settimeout(check_interval)  # Set timeout to check interval
                         response_raw = self.ws.recv()
                         self._debug_print(f"Received raw response: {response_raw}")
                         response = json.loads(response_raw)
