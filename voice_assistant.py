@@ -717,8 +717,10 @@ class JarvisAssistant:
                 final_result_received = False
                 response_text = ""
                 
-                check_interval = 10  # Check every 10 seconds
+                initial_period = 90  # First 1.5 minutes in seconds
                 while time.time() - start_time < overall_timeout:
+                    elapsed_time = time.time() - start_time
+                    check_interval = 20 if elapsed_time <= initial_period else 30  # 20s for first 1.5min, then 30s
                     try:
                         self.ws.settimeout(check_interval)  # Set timeout to check interval
                         response_raw = self.ws.recv()
