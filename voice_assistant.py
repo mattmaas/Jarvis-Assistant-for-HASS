@@ -297,9 +297,11 @@ class JarvisAssistant:
             with sr.Microphone() as source:
                 self._debug_print("Listening for command...")
                 recognizer.dynamic_energy_threshold = True
-                recognizer.energy_threshold = 300  # Lower value for increased sensitivity
-                recognizer.pause_threshold = 0.8  # Reduced pause threshold for quicker response
-                audio = recognizer.listen(source, timeout=10, phrase_time_limit=120)
+                recognizer.energy_threshold = 400  # Keep current threshold
+                recognizer.pause_threshold = 4.0  # Much longer pause threshold (4 seconds)
+                recognizer.phrase_threshold = 0.2  # Keep current minimum speaking time
+                recognizer.non_speaking_duration = 2.0  # Double the silence needed before completion
+                audio = recognizer.listen(source, timeout=30, phrase_time_limit=240)  # Keep current timeout
 
             if self.is_running:
                 self._set_processing_color()  # Set color to orange after listening
