@@ -298,9 +298,9 @@ class JarvisAssistant:
                 self._debug_print("Listening for command...")
                 recognizer.dynamic_energy_threshold = True
                 recognizer.energy_threshold = 400  # Keep current threshold
-                recognizer.pause_threshold = 4.0  # Much longer pause threshold (4 seconds)
+                recognizer.pause_threshold = 8.0  # Very long pause threshold (8 seconds)
                 recognizer.phrase_threshold = 0.2  # Keep current minimum speaking time
-                recognizer.non_speaking_duration = 2.0  # Double the silence needed before completion
+                recognizer.non_speaking_duration = 8.0  # Much longer silence threshold (8 seconds)
                 audio = recognizer.listen(source, timeout=30, phrase_time_limit=240)  # Keep current timeout
 
             if self.is_running:
